@@ -9,10 +9,10 @@ import { ThemedView } from '@/components/ThemedView';
 export default function Debug() {
   return (
     <ParallaxScrollView
-      headerBackgroundColor={{ light: '#GFCEDC', dark: '#1D3D47' }}
+      headerBackgroundColor={{ light: '#FFFFFF', dark: '#FFFFFF' }}
       headerImage={
         <Image
-          source={require('@/assets/images/icon.png')}
+          source={require('@/assets/images/react-logo.png')}
           style={styles.background}
         />
       }>
