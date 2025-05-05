@@ -6,18 +6,18 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
-export default function HomeScreen() {
+export default function Debug() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#GFCEDC', dark: '#1D3D47' }}
       headerImage={
         <Image
-          source={require('@/assets/images/react-logo.png')}
+          source={require('@/assets/images/icon.png')}
           style={styles.background}
         />
       }>
       <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Medicinski diktafon</ThemedText>
+        <ThemedText type="title">Debug Page</ThemedText>
       </ThemedView>
 
       {/* Audio Interface UI */}
