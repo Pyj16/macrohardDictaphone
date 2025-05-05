@@ -6,7 +6,76 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+import React from "react";
+import {Recording} from "expo-av/build/Audio/Recording";
+import {Audio} from "expo-av";
+
 export default function HomeScreen() {
+
+  const [recording, setRecording] = React.useState<Recording>();
+  const [recordings, setRecordings] = React.useState([]);
+
+
+
+  async function startRecording(){
+
+    try {
+      const perm = await Audio.requestPermissionsAsync();
+      if (perm.status === "granted"){
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+        });
+        const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+        setRecording(recording);
+      }
+    }
+    catch (e){
+      console.error(e);
+    }
+  }
+
+  // TO-DO: Figure out how to make this prettier for TypeScript, remove all the ts-ignores.
+  async function stopRecording(){
+    setRecording(undefined);
+
+    // @ts-ignore
+    await recording.stopAndUnloadAsync();
+    // @ts-ignore
+    let allRecordings = [...recordings];
+    // @ts-ignore
+    const { sound, status } = await recording.createNewLoadedSoundAsync();
+    // @ts-ignore
+    allRecordings.push({
+      sound: sound,
+      // @ts-ignore
+      duration: getDurationFormatted(status.durationMillis),
+      // @ts-ignore
+      file: recording.getURI(),
+    });
+
+    // @ts-ignore
+    setRecordings(allRecordings);
+  }
+
+  function getDurationFormatted(milliseconds: number) {
+    const minutes = milliseconds / 60000
+    const seconds = Math.round(minutes - Math.floor(minutes) * 60);
+    return seconds < 10 ? `${Math.floor(minutes)}"0${seconds}` : `${Math.floor(minutes)}:${seconds}`;
+  }
+
+  function playLastRecording() {
+    // @ts-ignore
+    if (recordings.length > 0) {
+      // @ts-ignore
+      recordings.at(recordings.length - 1).sound.replayAsync();
+    }
+  }
+
+  function clearRecordings() {
+    setRecordings([]);
+  }
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#GFCEDC', dark: '#1D3D47' }}
@@ -24,20 +93,20 @@ export default function HomeScreen() {
       <ThemedView style={styles.audioContainer}>
         <Text style={styles.statusText}>Status: Idle</Text>
 
-        <TouchableOpacity style={styles.button}>
+        <TouchableOpacity style={styles.button} onPress={startRecording}>
           <Text style={styles.buttonText}>Record</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.stopButton}>
+        <TouchableOpacity style={styles.stopButton} onPress={stopRecording}>
           <Text style={styles.buttonText}>Stop</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Replay</Text>
+        <TouchableOpacity style={styles.button} onPress={playLastRecording}>
+          <Text style={styles.buttonText}>Replay #{recordings.length}</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Re-record</Text>
+        <TouchableOpacity style={styles.button} onPress={clearRecordings}>
+          <Text style={styles.buttonText}>Clear Recording</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.button, styles.submitButton]}>
