@@ -9,13 +9,13 @@ import { ThemedView } from '@/components/ThemedView';
 import React from "react";
 import {Recording} from "expo-av/build/Audio/Recording";
 import {Audio} from "expo-av";
+import {useNavigation} from '@react-navigation/native';
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
 
   const [recording, setRecording] = React.useState<Recording>();
   const [recordings, setRecordings] = React.useState([]);
-
-
 
   async function startRecording(){
 
@@ -26,7 +26,13 @@ export default function HomeScreen() {
           allowsRecordingIOS: true,
           playsInSilentModeIOS: true,
         });
-        const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+        const { recording } = await Audio.Recording.createAsync(
+            {
+              ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+              // @ts-ignore
+              outputFormat: ".mp3",
+              uri: '',
+            });
         setRecording(recording);
       }
     }
@@ -54,6 +60,7 @@ export default function HomeScreen() {
       file: recording.getURI(),
     });
 
+
     // @ts-ignore
     setRecordings(allRecordings);
   }
@@ -75,6 +82,8 @@ export default function HomeScreen() {
   function clearRecordings() {
     setRecordings([]);
   }
+
+
 
   return (
     <ParallaxScrollView
@@ -101,12 +110,16 @@ export default function HomeScreen() {
           <Text style={styles.buttonText}>Stop</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={playLastRecording}>
-          <Text style={styles.buttonText}>Replay #{recordings.length}</Text>
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText} onPress={
+            // @ts-ignore
+            () => navigation.navigate("recordings", {
+            recordings: recordings,
+          })}>Recordings</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button} onPress={clearRecordings}>
-          <Text style={styles.buttonText}>Clear Recording</Text>
+        <TouchableOpacity style={styles.button} onPress={playLastRecording}>
+          <Text style={styles.buttonText}>Play Last</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.button, styles.submitButton]}>
