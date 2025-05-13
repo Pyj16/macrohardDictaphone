@@ -47,7 +47,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={24} name="paperplane.fill" color={color} />,
         }}
       />
-
     </Tabs>
   );
 }

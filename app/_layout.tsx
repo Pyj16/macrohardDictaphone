@@ -5,6 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
+import React from "react";
+import Recordings from "@/app/recordings";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -17,11 +19,13 @@ export default function RootLayout() {
     return null;
   }
 
+
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="recordings" />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>
