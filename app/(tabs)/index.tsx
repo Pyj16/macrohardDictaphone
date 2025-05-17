@@ -136,8 +136,15 @@ export default function HomeScreen() {
           <Text style={styles.buttonText} onPress={
             // @ts-ignore
             () => navigation.navigate("recordings", {
-            recordings: recordings,
-          })}>Recordings</Text>
+              recordings: recordings,
+            })}>Recordings</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.button}>
+          <Text style={styles.buttonText} onPress={
+            // @ts-ignore
+            () => navigation.navigate("personel", {
+            })}>Personel Page</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.button} onPress={playLastRecording}>
