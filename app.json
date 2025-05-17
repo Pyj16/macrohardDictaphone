@@ -8,6 +8,14 @@
     "scheme": "macroharddictaphone",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "googleClientId": "461690677221-m30b4qeutola3j0od96acbd2n3o2u50s.apps.googleusercontent.com",
+      "googleAndroidClientId": "461690677221-4dhmdeimr572las0kuhof41tsv7ddodb.apps.googleusercontent.com",
+      "router": {},
+      "eas": {
+        "projectId": "ba8e2126-360d-4d58-8834-db56454636ce"
+      }
+    },
     "ios": {
       "supportsTablet": true
     },
@@ -16,7 +24,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.peklar.macrohardDictaphone"
     },
     "web": {
       "bundler": "metro",
@@ -32,6 +41,12 @@
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.461690677221-iiubqglurpquo77jp35cir0q47lcat4p"
         }
       ]
     ],

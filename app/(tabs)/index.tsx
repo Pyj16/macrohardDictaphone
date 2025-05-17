@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View, Button } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -10,12 +10,34 @@ import React from "react";
 import {Recording} from "expo-av/build/Audio/Recording";
 import {Audio} from "expo-av";
 import {useNavigation} from '@react-navigation/native';
+import { signIn} from '../services/authService.ts';
+
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+  statusCodes,
+} from '@react-native-google-signin/google-signin';
+
+GoogleSignin.configure({
+  webClientId: '461690677221-m30b4qeutola3j0od96acbd2n3o2u50s.apps.googleusercontent.com', // client ID of type WEB for your server. Required to get the `idToken` on the user object, and for offline access.
+  scopes: ['https://www.googleapis.com/auth/drive.readonly'], // what API you want to access on behalf of the user, default is email and profile
+  offlineAccess: true, // if you want to access Google API on behalf of the user FROM YOUR SERVER
+  hostedDomain: '', // specifies a hosted domain restriction
+  forceCodeForRefreshToken: false, // [Android] related to `serverAuthCode`, read the docs link below *.
+  accountName: '', // [Android] specifies an account name on the device that should be used
+  iosClientId: '461690677221-iiubqglurpquo77jp35cir0q47lcat4p.apps.googleusercontent.com', // [iOS] if you want to specify the client ID of type iOS (otherwise, it is taken from GoogleService-Info.plist)
+  googleServicePlistPath: '', // [iOS] if you renamed your GoogleService-Info file, new name here, e.g. "GoogleService-Info-Staging"
+  openIdRealm: '', // [iOS] The OpenID2 realm of the home web server. This allows Google to include the user's OpenID Identifier in the OpenID Connect ID token.
+  profileImageSize: 120, // [iOS] The desired height (and width) of the profile image. Defaults to 120px
+});
 
 export default function HomeScreen() {
   const navigation = useNavigation();
 
   const [recording, setRecording] = React.useState<Recording>();
   const [recordings, setRecordings] = React.useState([]);
+
+
 
   async function startRecording(){
 
@@ -126,6 +148,13 @@ export default function HomeScreen() {
           <Text style={styles.buttonText}>Submit</Text>
         </TouchableOpacity>
       </ThemedView>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <GoogleSigninButton
+              size={GoogleSigninButton.Size.Wide}
+              color={GoogleSigninButton.Color.Dark}
+              onPress={signIn}
+              />
+          </View>
     </ParallaxScrollView>
   );
 }
