@@ -10,8 +10,10 @@ import {RouteProp, useRoute} from "@react-navigation/core";
 import {setParams} from "expo-router/build/global-state/routing";
 
 import * as FileSystem from 'expo-file-system';
+import React from "react";
 
 export default function Recordings() {
+  const [statusText, setStatusText] = React.useState("Idle")
   const route: RouteProp<{params: {recordings: []}}> = useRoute();
   const {recordings} = route.params;
 
@@ -38,27 +40,35 @@ export default function Recordings() {
   }
 
   const handleUpload = async () => {
-    var body = new FormData();
 
-    // @ts-ignore
-    var contentUri = await FileSystem.getContentUriAsync(recordings.at(0).file)
+    let body = new FormData();
 
-    // @ts-ignore
-    console.log(FileSystem.getContentUriAsync(recordings.at(0).file));
-
-    // @ts-ignore
-    body.append("audio_file", {
+    recordings.map(async (recording) => {
       // @ts-ignore
-      uri: contentUri,
-      name: 'recordedAudio.mp3',
-      type: 'audio/mpeg',
-    });
+      let contentUri = await FileSystem.getContentUriAsync(recording.file)
+      setStatusText(contentUri)
 
+      // @ts-ignore
+      body.append("audio_file", {
+        // @ts-ignore
+        uri: contentUri,
+        name: 'audio.mp3',
+        type: 'audio/mpeg',
+      });
+    })
 
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', 'http://127.0.0.1:5000/upload', true);
+    console.log(body)
+
+    let xhr = new XMLHttpRequest();
+    xhr.open('POST', 'http://127.0.0.1:5000/transcribe', true);
     xhr.setRequestHeader("Accept", "*");
     xhr.send(body);
+
+    // Working
+    // let xhr = new XMLHttpRequest();
+    // xhr.open('POST', 'https://154b-46-122-66-48.ngrok-free.app/transcribe', true);
+    // xhr.setRequestHeader("Accept", "*");
+    // xhr.send(body);
 
   };
 
@@ -76,7 +86,7 @@ export default function Recordings() {
       </ThemedView>
 
       <ThemedView style={styles.audioContainer}>
-        <Text style={styles.statusText}>Status: Idle</Text>
+        <Text style={styles.statusText}>Status: {statusText}</Text>
 
 
         {
@@ -86,7 +96,8 @@ export default function Recordings() {
                   <TouchableOpacity style={styles.button}>
                     <Text style={styles.buttonText} onPress={() =>
                         //@ts-ignore
-                        recording.sound.replayAsync()}>Play #{index}</Text>
+                        recording.sound.replayAsync()
+                    }>Play #{index}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.button}>
                     <Text style={styles.stopButton} onPress={() =>
