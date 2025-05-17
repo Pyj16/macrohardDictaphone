@@ -31,13 +31,17 @@ GoogleSignin.configure({
   profileImageSize: 120, // [iOS] The desired height (and width) of the profile image. Defaults to 120px
 });
 
+const tempTransc = [
+  "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+  "Pellentesque sed risus luctus, lobortis ante rhoncus, porta purus.",
+  "Aliquam elit eros, viverra sed tempor vitae, rhoncus tempor turpis."
+]
+
 export default function HomeScreen() {
   const navigation = useNavigation();
 
   const [recording, setRecording] = React.useState<Recording>();
   const [recordings, setRecordings] = React.useState([]);
-
-
 
   async function startRecording(){
 
@@ -144,6 +148,7 @@ export default function HomeScreen() {
           <Text style={styles.buttonText} onPress={
             // @ts-ignore
             () => navigation.navigate("personel", {
+              transcriptions: tempTransc
             })}>Personel Page</Text>
         </TouchableOpacity>
 

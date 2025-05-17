@@ -27,6 +27,7 @@ export default function RootLayout() {
           <Stack.Screen name="+not-found" />
           <Stack.Screen name="recordings" />
           <Stack.Screen name="personel" />
+          <Stack.Screen name="anamnesis-edit" />
       </Stack>
       <StatusBar style="auto" />
     </ThemeProvider>

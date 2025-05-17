@@ -15,18 +15,23 @@ import {RouteProp, useRoute} from "@react-navigation/core";
 export default function Personel() {
   const navigation = useNavigation();
 
-  const route: RouteProp<{params: {transcriptions: string[]}}> = useRoute();
+  const route: RouteProp<{params: {id: number, transcriptions: string[]}}> = useRoute();
 
-
+  const original = route.params.transcriptions[route.params.id];
   const [transcriptions, setTranscriptions] = React.useState(route.params.transcriptions);
+  const [transcription, setTranscription] = React.useState(original);
+  const id = route.params.id;
 
   useEffect(() => {
-    setTranscriptions(route.params.transcriptions);
+    let newTranscriptions = [...transcriptions];
+    newTranscriptions[id] = transcription;
+    setTranscriptions(newTranscriptions);
 
-  }, [route.params.transcriptions, transcriptions]);
+  }, [transcriptions, transcription]);
+
 
   function emptyFunction() {
-    setTranscriptions(route.params.transcriptions)
+
   }
 
   return (
@@ -46,31 +51,30 @@ export default function Personel() {
       <ThemedView style={styles.audioContainer}>
         <Text style={styles.statusText}>Status: Idle</Text>
 
-        {
-          transcriptions.map((t, index) => {
-            return(
-                <>
-                  <TouchableOpacity style={styles.button} onPress={emptyFunction}>
-                    <Text style={styles.buttonText}>{t}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.button} onPress={emptyFunction}>
-                    <Text style={styles.buttonText} onPress={
-                      // @ts-ignore
-                      () => navigation.navigate("anamnesis-edit", {
-                        id: index,
-                        transcriptions: transcriptions,
-                      })}>Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.stopButton} onPress={emptyFunction}>
-                    <Text style={styles.buttonText}>Delete</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={[styles.button, styles.submitButton]}>
-                    <Text style={styles.buttonText}>Approve</Text>
-                  </TouchableOpacity>
-                </>
-            )
-          })
-        }
+
+        <TouchableOpacity style={styles.button} onPress={emptyFunction}>
+          <Text style={styles.buttonText}>{original}</Text>
+        </TouchableOpacity>
+
+        <TextInput
+            style={styles.buttonText}
+            onChangeText={setTranscription}
+            value={transcription}
+        />
+
+        <TouchableOpacity style={[styles.button, styles.submitButton]}>
+          <Text style={styles.buttonText} onPress={() =>
+              // @ts-ignore
+              navigation.navigate("personel", {
+                transcriptions: transcriptions,
+              })}>Apply</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.stopButton} onPress={emptyFunction}>
+          <Text style={styles.buttonText}>Cancel</Text>
+        </TouchableOpacity>
+
+
       </ThemedView>
     </ParallaxScrollView>
   );
