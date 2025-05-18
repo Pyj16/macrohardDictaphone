@@ -15,11 +15,12 @@ import {RouteProp, useRoute} from "@react-navigation/core";
 export default function Personel() {
   const navigation = useNavigation();
 
-  const route: RouteProp<{params: {transcriptions: string[]}}> = useRoute();
+  const route: RouteProp<{params: {transcriptions: string[], debug: boolean}}> = useRoute();
 
 
   const [transcriptions, setTranscriptions] = React.useState(route.params.transcriptions);
 
+  // Essentially gets called whenever redirect is sent to this page.
   useEffect(() => {
     setTranscriptions(route.params.transcriptions);
 
@@ -45,6 +46,10 @@ export default function Personel() {
       {/* Audio Interface UI */}
       <ThemedView style={styles.audioContainer}>
         <Text style={styles.statusText}>Status: Idle</Text>
+
+        <TouchableOpacity style={styles.button} onPress={emptyFunction}>
+          <Text style={styles.buttonText}>Read From DB</Text>
+        </TouchableOpacity>
 
         {
           transcriptions.map((t, index) => {
