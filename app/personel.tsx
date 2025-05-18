@@ -11,23 +11,51 @@ import {Recording} from "expo-av/build/Audio/Recording";
 import {Audio} from "expo-av";
 import {useNavigation} from '@react-navigation/native';
 import {RouteProp, useRoute} from "@react-navigation/core";
+import {setParams} from "expo-router/build/global-state/routing";
 
 export default function Personel() {
   const navigation = useNavigation();
 
   const route: RouteProp<{params: {transcriptions: string[], debug: boolean}}> = useRoute();
 
-
+  const originalTransactions = route.params.transcriptions;
   const [transcriptions, setTranscriptions] = React.useState(route.params.transcriptions);
+  const approvedTranscriptions = [];
+  const rejectedTranscriptions = [];
 
   // Essentially gets called whenever redirect is sent to this page.
   useEffect(() => {
     setTranscriptions(route.params.transcriptions);
 
-  }, [route.params.transcriptions, transcriptions]);
+  }, [route.params.transcriptions]);
+
+
 
   function emptyFunction() {
-    setTranscriptions(route.params.transcriptions)
+  }
+
+  function readFromDB() {
+
+  }
+
+  function deleteTranscription(i: number){
+    console.log("Rejecting transcription at" + i);
+    rejectedTranscriptions.push(transcriptions[i])
+
+    let newTranscriptions = [...transcriptions];
+    newTranscriptions.splice(i, 1);
+
+    setTranscriptions(newTranscriptions)
+  }
+
+  function approveTranscription(i: number){
+    console.log("Approving transcription at" + i);
+    approvedTranscriptions.push(transcriptions[i])
+
+    let newTranscriptions = [...transcriptions];
+    newTranscriptions.splice(i, 1);
+
+    setTranscriptions(newTranscriptions)
   }
 
   return (
@@ -47,7 +75,7 @@ export default function Personel() {
       <ThemedView style={styles.audioContainer}>
         <Text style={styles.statusText}>Status: Idle</Text>
 
-        <TouchableOpacity style={styles.button} onPress={emptyFunction}>
+        <TouchableOpacity style={styles.button} onPress={readFromDB}>
           <Text style={styles.buttonText}>Read From DB</Text>
         </TouchableOpacity>
 
@@ -66,10 +94,10 @@ export default function Personel() {
                         transcriptions: transcriptions,
                       })}>Edit</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.stopButton} onPress={emptyFunction}>
-                    <Text style={styles.buttonText}>Delete</Text>
+                  <TouchableOpacity style={styles.stopButton} onPress={() => deleteTranscription(index)}>
+                    <Text style={styles.buttonText}>Reject</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.button, styles.submitButton]}>
+                  <TouchableOpacity style={[styles.button, styles.submitButton]} onPress={() => approveTranscription(index)}>
                     <Text style={styles.buttonText}>Approve</Text>
                   </TouchableOpacity>
                 </>

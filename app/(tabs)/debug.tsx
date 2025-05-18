@@ -109,7 +109,7 @@ export default function Debug() {
             />
           }>
         <ThemedView style={styles.titleContainer}>
-          <ThemedText type="title">Medicinski diktafon</ThemedText>
+          <ThemedText type="title">Debug Page</ThemedText>
         </ThemedView>
 
         {/* Audio Interface UI */}

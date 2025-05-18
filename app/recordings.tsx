@@ -23,9 +23,9 @@ export default function Recordings() {
   }
 
   function deleteRecordingAt(i: number){
-    let newRecordings = recordings.splice(i, 1);
+    recordings.splice(i, 1);
     // @ts-ignore
-    setParams(newRecordings)
+    setParams(recordings)
   }
 
   function rearrangeRecordings(i: number, j: number){

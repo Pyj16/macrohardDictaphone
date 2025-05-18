@@ -17,9 +17,10 @@ export default function Personel() {
 
   const route: RouteProp<{params: {id: number, transcriptions: string[]}}> = useRoute();
 
-  const original = route.params.transcriptions[route.params.id];
+  let originalList = route.params.transcriptions;
+  let originalText = route.params.transcriptions[route.params.id];
   const [transcriptions, setTranscriptions] = React.useState(route.params.transcriptions);
-  const [transcription, setTranscription] = React.useState(original);
+  const [transcription, setTranscription] = React.useState(originalText);
   const id = route.params.id;
 
   useEffect(() => {
@@ -27,11 +28,30 @@ export default function Personel() {
     newTranscriptions[id] = transcription;
     setTranscriptions(newTranscriptions);
 
-  }, [transcriptions, transcription]);
+  }, [transcription]);
 
+  useEffect(() => {
+    setTranscription(route.params.transcriptions[route.params.id]);
+
+  }, [route]);
 
   function emptyFunction() {
 
+  }
+
+  function handleCancel() {
+    setTranscription(originalText);
+    // @ts-ignore
+    navigation.navigate("personel", {
+      transcriptions: originalList,
+    })
+  }
+
+  function handleApply() {
+      // @ts-ignore
+      navigation.navigate("personel", {
+        transcriptions: transcriptions,
+      })
   }
 
   return (
@@ -53,27 +73,22 @@ export default function Personel() {
 
 
         <TouchableOpacity style={styles.button} onPress={emptyFunction}>
-          <Text style={styles.buttonText}>{original}</Text>
+          <Text style={styles.buttonText}>{originalText}</Text>
         </TouchableOpacity>
 
         <TextInput
-            style={styles.buttonText}
+            style={styles.editField}
             onChangeText={setTranscription}
             value={transcription}
         />
 
         <TouchableOpacity style={[styles.button, styles.submitButton]}>
-          <Text style={styles.buttonText} onPress={() =>
-              // @ts-ignore
-              navigation.navigate("personel", {
-                transcriptions: transcriptions,
-              })}>Apply</Text>
+          <Text style={styles.buttonText} onPress={handleApply}>Apply</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.stopButton} onPress={emptyFunction}>
-          <Text style={styles.buttonText}>Cancel</Text>
+        <TouchableOpacity style={styles.stopButton}>
+          <Text style={styles.buttonText} onPress={handleCancel}>Cancel</Text>
         </TouchableOpacity>
-
 
       </ThemedView>
     </ParallaxScrollView>
@@ -124,6 +139,15 @@ const styles = StyleSheet.create({
       width: 160,
       alignItems: 'center',
       backgroundColor: '#ff0000',
+  },
+  editField: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    width: 360,
+    height: 160,
+    alignItems: 'center',
+    backgroundColor: '#EEEEEE',
   },
   buttonText: {
     color: '#fff',
