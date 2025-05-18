@@ -43,11 +43,14 @@ export default function HomeScreen() {
   const [recording, setRecording] = React.useState<Recording>();
   const [recordings, setRecordings] = React.useState([]);
 
+  const [statusText, setStatusText] = React.useState<string>("Idle");
+
   async function startRecording(){
 
     try {
       const perm = await Audio.requestPermissionsAsync();
       if (perm.status === "granted"){
+        setStatusText("Recording...")
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
           playsInSilentModeIOS: true,
@@ -71,6 +74,7 @@ export default function HomeScreen() {
   async function stopRecording(){
     setRecording(undefined);
 
+    setStatusText("Saving")
     // @ts-ignore
     await recording.stopAndUnloadAsync();
     // @ts-ignore
@@ -89,6 +93,8 @@ export default function HomeScreen() {
 
     // @ts-ignore
     setRecordings(allRecordings);
+
+    setStatusText("Idle")
   }
 
   function getDurationFormatted(milliseconds: number) {
@@ -98,6 +104,7 @@ export default function HomeScreen() {
   }
 
   function playLastRecording() {
+    setStatusText("Replaying...")
     // @ts-ignore
     if (recordings.length > 0) {
       // @ts-ignore
@@ -108,8 +115,6 @@ export default function HomeScreen() {
   function clearRecordings() {
     setRecordings([]);
   }
-
-
 
   return (
     <ParallaxScrollView
@@ -126,7 +131,7 @@ export default function HomeScreen() {
 
       {/* Audio Interface UI */}
       <ThemedView style={styles.audioContainer}>
-        <Text style={styles.statusText}>Status: Idle</Text>
+        <Text style={styles.statusText}>Status: {statusText}</Text>
 
         <TouchableOpacity style={styles.button} onPress={startRecording}>
           <Text style={styles.buttonText}>Record</Text>

@@ -26,11 +26,14 @@ export default function Debug() {
   const [recording, setRecording] = React.useState<Recording>();
   const [recordings, setRecordings] = React.useState([]);
 
+  const [statusText, setStatusText] = React.useState<string>("Idle");
+
   async function startRecording(){
 
     try {
       const perm = await Audio.requestPermissionsAsync();
       if (perm.status === "granted"){
+        setStatusText("Recording...")
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: true,
           playsInSilentModeIOS: true,
@@ -54,6 +57,7 @@ export default function Debug() {
   async function stopRecording(){
     setRecording(undefined);
 
+    setStatusText("Saving")
     // @ts-ignore
     await recording.stopAndUnloadAsync();
     // @ts-ignore
@@ -72,6 +76,8 @@ export default function Debug() {
 
     // @ts-ignore
     setRecordings(allRecordings);
+
+    setStatusText("Idle")
   }
 
   function getDurationFormatted(milliseconds: number) {
@@ -81,6 +87,7 @@ export default function Debug() {
   }
 
   function playLastRecording() {
+    setStatusText("Replaying...")
     // @ts-ignore
     if (recordings.length > 0) {
       // @ts-ignore
@@ -92,7 +99,6 @@ export default function Debug() {
     setRecordings([]);
   }
 
-
   return (
       <ParallaxScrollView
           headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
@@ -103,12 +109,12 @@ export default function Debug() {
             />
           }>
         <ThemedView style={styles.titleContainer}>
-          <ThemedText type="title">Debug Page</ThemedText>
+          <ThemedText type="title">Medicinski diktafon</ThemedText>
         </ThemedView>
 
         {/* Audio Interface UI */}
         <ThemedView style={styles.audioContainer}>
-          <Text style={styles.statusText}>Status: Idle</Text>
+          <Text style={styles.statusText}>Status: {statusText}</Text>
 
           <TouchableOpacity style={styles.button} onPress={startRecording}>
             <Text style={styles.buttonText}>Record</Text>
