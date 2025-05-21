@@ -10,7 +10,7 @@ import React from "react";
 import {Recording} from "expo-av/build/Audio/Recording";
 import {Audio} from "expo-av";
 import {GoogleSigninButton} from "@react-native-google-signin/google-signin";
-import {signIn} from "@/app/services/authService";
+import {signIn} from "@/app/services/authContext";
 
 
 

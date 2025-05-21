@@ -171,15 +171,7 @@ export default function HomeScreen() {
               recordings: recordings,
             })}>Recordings</Text>
         </TouchableOpacity>
-
       </ThemedView>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <GoogleSigninButton
-              size={GoogleSigninButton.Size.Wide}
-              color={GoogleSigninButton.Color.Dark}
-              onPress={signIn}
-              />
-          </View>
     </ParallaxScrollView>
   );
 }
