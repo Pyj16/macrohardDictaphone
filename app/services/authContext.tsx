@@ -59,17 +59,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (res.status !== 200) throw new Error(data.error || 'Verification failed');
 
       setUserInfo({
-        ...response.user,
-        name: data.name,
-        photo: data.photo,
-        role: data.role,
+          name: data.name,
+          photo: user.photo,
+          role: data.role,
+          email: data.email,
       });
 
       setJwt(data.jwt);
       console.log("Login successful");
-      console.log(data.jwt)
-      console.log(user)
       console.log("Set user role to:", data.role);
+      console.log("Photo: ", data.photo)
 
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {

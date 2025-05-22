@@ -148,13 +148,6 @@ export default function Debug() {
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
         </ThemedView>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <GoogleSigninButton
-              size={GoogleSigninButton.Size.Wide}
-              color={GoogleSigninButton.Color.Dark}
-              onPress={signIn}
-          />
-        </View>
       </ParallaxScrollView>
   );
 }
