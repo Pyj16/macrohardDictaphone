@@ -49,7 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error('Missing idToken or user info');
       }
 
-      const res = await fetch('https://fec4-89-142-133-2.ngrok-free.app/verify-token', { // DONT FORGET TO CHANGE THIS
+      const res = await fetch('http://192.168.64.30:5000/verify-token', { // Replace with your ip
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idToken }),

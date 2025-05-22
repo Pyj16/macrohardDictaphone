@@ -9,9 +9,9 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (userInfo?.role === 'doctor') {
-      router.replace('/');
+      router.replace('/index');
     } else if (userInfo?.role === 'personel') {
-      router.replace('/');
+      router.replace('/personel');
     }
   }, [userInfo]);
 
