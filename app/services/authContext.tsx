@@ -40,7 +40,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       console.log("Attempting Google Sign-In...");
       const response = await GoogleSignin.signIn();
-      console.log("Sign-In Response:", response);
 
       const idToken = response.idToken || response?.data?.idToken;
       const user = response.user || response?.data?.user;
@@ -67,8 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setJwt(data.jwt);
       console.log("Login successful");
-      console.log("Set user role to:", data.role);
-      console.log("Photo: ", data.photo)
+      console.log("User role is:", data.role);
 
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
