@@ -7,8 +7,6 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
 import React from "react";
-// import {Recording, RecordingStatus} from "expo-av/build/Audio/Recording";
-// import {Audio} from "expo-av";
 import { useAudioRecorder, RecordingOptions, AudioModule, RecordingPresets } from 'expo-audio';
 import {useNavigation} from '@react-navigation/native';
 import { signIn} from '../services/authService.ts';
@@ -40,10 +38,6 @@ export default function HomeScreen() {
   // Debug status
   const [statusText, setStatusText] = React.useState<string>("Idle");
 
-
-  // old implementation
-//   const [recording, setRecording] = React.useState<Recording>();
-//   const [recordings, setRecordings] = React.useState([]);
 
   // New Implementation
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -96,75 +90,6 @@ export default function HomeScreen() {
       }
     })();
   }, []);
-
-//  Old implementation
-//   async function startRecording(){
-//
-//     try {
-//       const perm = await Audio.requestPermissionsAsync();
-//       if (perm.status === "granted"){
-//         await Audio.setAudioModeAsync({
-//           allowsRecordingIOS: true,
-//           playsInSilentModeIOS: true,
-//         });
-//         const { recording } = await Audio.Recording.createAsync(
-//               Audio.RecordingOptionsPresets.HIGH_QUALITY
-//             // (status: RecordingStatus) => {
-//             //   // @ts-ignore
-//             //   let loudness = isNaN(status.metering + 160) ? 10 : Math.max(status.metering + 160, 10);
-//             //   ((waves: any) => [loudness, ...waves]);
-//             // }
-//             );
-//         setRecording(recording);
-//       }
-//     }
-//     catch (e){
-//       console.error(e);
-//     }
-//   }
-//
-//   // TO-DO: Figure out how to make this prettier for TypeScript, remove all the ts-ignores.
-//   async function stopRecording(){
-//     if (!recording){
-//         return;
-//     }
-//     setRecording(undefined);
-//     await recording.stopAndUnloadAsync();
-//     let allRecordings = [...recordings];
-//     const { sound, status } = await recording.createNewLoadedSoundAsync();
-//
-//     console.log(sound);
-//
-//     // TODO: Add functionality to not save audio shorter than 1 second
-//     // @ts-ignore
-//     // if(status.durationMillis > 1500){
-//     // }
-//       allRecordings.push({
-//         sound: sound,
-//         file: recording.getURI(),
-//       });
-//
-//       console.log(allRecordings);
-//
-//       setRecordings(allRecordings);
-//   }
-//
-//   function getDurationFormatted(milliseconds: number) {
-//     const minutes = milliseconds / 60000
-//     const seconds = Math.round(minutes - Math.floor(minutes) * 60);
-//     return seconds < 10 ? `${Math.floor(minutes)}"0${seconds}` : `${Math.floor(minutes)}:${seconds}`;
-//   }
-//
-//   function playLastRecording() {
-//     setStatusText("Replaying...")
-//     // @ts-ignore
-//     if (recordings.length > 0) {
-//       // @ts-ignore
-//       recordings.at(recordings.length - 1).sound.replayAsync();
-//     }
-//   }
-
-
 
   function handleButtonUpdate(){
     if(status == Status.idle){

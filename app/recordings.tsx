@@ -10,11 +10,11 @@ import {RouteProp, useRoute} from "@react-navigation/core";
 import {setParams} from "expo-router/build/global-state/routing";
 import { useEffect, useState } from 'react';
 import { useAudioPlayer } from 'expo-audio';
-// import AudioPlayer from 'expo-audio';
 import {useNavigation} from '@react-navigation/native';
 import { Stack, usePathname, Redirect, Slot } from 'expo-router';
 
 import * as FileSystem from 'expo-file-system';
+import { StorageAccessFramework } from 'expo-file-system';
 import React from "react";
 
 export default function Recordings() {
@@ -22,21 +22,21 @@ export default function Recordings() {
 
   const [statusText, setStatusText] = React.useState("Idle")
   const route: RouteProp<{params: {recordings: []}}> = useRoute();
-  const {recordings} = route.params;
+  const [recordings, setRecordings]= React.useState(route.params.recordings);
 
   const player = useAudioPlayer();
 
-  // Old Implementation
-//   function playRecordingAt(i: number){
-//       recordings.at(i).sound.replayAsync();
-//   }
+  const recordingsDir = FileSystem.documentDirectory + 'recordings/'
 
-    // New Implementation
     function playRecordingAt(i: number){
-        console.log(typeof recordings.at(i).file)
-        player.replace(recordings.at(i).file);
+        const audioPath = recordingsDir + recordings.at(i)
+        player.replace(audioPath);
         player.play();
     }
+
+    useEffect(() => {
+        handleLocalRead()
+        }, [route.params])
 
     useEffect(() => {
     const backAction = () => {
@@ -56,10 +56,10 @@ export default function Recordings() {
     return () => backHandler.remove();
   }, []);
 
-  function deleteRecordingAt(i: number){
-    recordings.splice(i, 1);
-    // @ts-ignore
-    setParams(recordings)
+  async function deleteRecordingAt(i: number){
+        const audioPath = recordingsDir + recordings.at(i)
+        await FileSystem.deleteAsync(audioPath)
+        handleLocalRead()
   }
 
   function rearrangeRecordings(i: number, j: number){
@@ -73,15 +73,18 @@ export default function Recordings() {
     setParams(newRecordings)
   }
 
-    const handleDummy = () => {
+    async function handleLocalRead (){
 
-        player.replace('file:///data/user/0/com.anonymous.macrohardDictaphone/files/recordings/recording-test.m4a');
-        player.play();
+      console.log('fetching files');
+      let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'recordings');
+      console.log('fetched files');
+      console.log(files);
+      setRecordings(files)
         }
+
   const handleUpload = async () => {
-
     let body = new FormData();
-
+    // @ts-ignore
     recordings.map(async (recording) => {
       // @ts-ignore
       let contentUri = await FileSystem.getContentUriAsync(recording.file)
@@ -153,9 +156,6 @@ export default function Recordings() {
           })
         }
 
-//         <TouchableOpacity style={[styles.button, styles.submitButton]}>
-//           <Text style={styles.buttonText} onPress={handleDummy}>Dummy recording</Text>
-//         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.button, styles.submitButton]}>
           <Text style={styles.buttonText} onPress={handleUpload}>Submit</Text>
