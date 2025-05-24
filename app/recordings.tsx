@@ -42,7 +42,7 @@ export default function Recordings() {
     const backAction = () => {
 //       console.log("Back Button Hit")
       console.log("Sending recordings", recordings)
-      navigation.navigate("(tabs)", {
+      navigation.navigate("(drawer)", {
         recordings: recordings,
       })
       return true;

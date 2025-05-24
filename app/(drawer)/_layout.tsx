@@ -3,9 +3,11 @@ import { Drawer } from 'expo-router/drawer';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import {RouteProp, useRoute} from "@react-navigation/core";
 
 export default function DrawerLayout() {
   const colorScheme = useColorScheme();
+  const route: RouteProp<{params: {recordings: []}}> = useRoute();
 
   return (
     <Drawer
@@ -20,6 +22,7 @@ export default function DrawerLayout() {
     >
       <Drawer.Screen
         name="index"
+        initialParams={route.params}
         options={{
           title: 'Home',
           drawerIcon: ({ color, size }) => (
