@@ -7,8 +7,11 @@ import { IconSymbol } from '@/components/ui/IconSymbol';
 import TabBarBackground from '@/components/ui/TabBarBackground';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import {RouteProp, useRoute} from "@react-navigation/core";
 
 export default function TabLayout() {
+  const route: RouteProp<{params: {recordings: []}}> = useRoute();
+
   const colorScheme = useColorScheme();
 
   return (
@@ -28,11 +31,12 @@ export default function TabLayout() {
     >
       <Tabs.Screen
         name="index"
+        initialParams={route.params}
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => (
             <IconSymbol size={24} name="house.fill" color={color} />
-          ),
+          )
         }}
       />
       <Tabs.Screen
@@ -53,6 +57,7 @@ export default function TabLayout() {
           ),
         }}
       />
+
       <Tabs.Screen
         name="login"
         options={{

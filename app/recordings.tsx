@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View, BackHandler } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
@@ -8,19 +8,53 @@ import { ThemedView } from '@/components/ThemedView';
 import {Recording} from "expo-av/build/Audio/Recording";
 import {RouteProp, useRoute} from "@react-navigation/core";
 import {setParams} from "expo-router/build/global-state/routing";
+import { useEffect, useState } from 'react';
+import { useAudioPlayer } from 'expo-audio';
+// import AudioPlayer from 'expo-audio';
+import {useNavigation} from '@react-navigation/native';
+import { Stack, usePathname, Redirect, Slot } from 'expo-router';
 
 import * as FileSystem from 'expo-file-system';
 import React from "react";
 
 export default function Recordings() {
+  const navigation = useNavigation();
+
   const [statusText, setStatusText] = React.useState("Idle")
   const route: RouteProp<{params: {recordings: []}}> = useRoute();
   const {recordings} = route.params;
 
-  function playRecordingAt(i: number){
-      // @ts-ignore
-      recordings.at(i).sound.replayAsync();
-  }
+  const player = useAudioPlayer();
+
+  // Old Implementation
+//   function playRecordingAt(i: number){
+//       recordings.at(i).sound.replayAsync();
+//   }
+
+    // New Implementation
+    function playRecordingAt(i: number){
+        console.log(typeof recordings.at(i).file)
+        player.replace(recordings.at(i).file);
+        player.play();
+    }
+
+    useEffect(() => {
+    const backAction = () => {
+//       console.log("Back Button Hit")
+      console.log("Sending recordings", recordings)
+      navigation.navigate("(tabs)", {
+        recordings: recordings,
+      })
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, []);
 
   function deleteRecordingAt(i: number){
     recordings.splice(i, 1);
@@ -39,6 +73,11 @@ export default function Recordings() {
     setParams(newRecordings)
   }
 
+    const handleDummy = () => {
+
+        player.replace('file:///data/user/0/com.anonymous.macrohardDictaphone/files/recordings/recording-test.m4a');
+        player.play();
+        }
   const handleUpload = async () => {
 
     let body = new FormData();
@@ -59,6 +98,7 @@ export default function Recordings() {
 
     console.log(body)
 
+    // Local
     let xhr = new XMLHttpRequest();
     xhr.open('POST', 'http://127.0.0.1:5000/transcribe', true);
     xhr.setRequestHeader("Accept", "*");
@@ -77,7 +117,7 @@ export default function Recordings() {
       headerBackgroundColor={{ light: '#FFFFFF', dark: '#FFFFFF' }}
       headerImage={
         <Image
-          source={require('@/assets/images/react-logo.png')}
+//           source={require('@/assets/images/react-logo.png')}
           style={styles.background}
         />
       }>
@@ -95,8 +135,7 @@ export default function Recordings() {
                 <>
                   <TouchableOpacity style={styles.button}>
                     <Text style={styles.buttonText} onPress={() =>
-                        //@ts-ignore
-                        recording.sound.replayAsync()
+                        playRecordingAt(index)
                     }>Play #{index}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.button}>
@@ -113,6 +152,10 @@ export default function Recordings() {
             )
           })
         }
+
+//         <TouchableOpacity style={[styles.button, styles.submitButton]}>
+//           <Text style={styles.buttonText} onPress={handleDummy}>Dummy recording</Text>
+//         </TouchableOpacity>
 
         <TouchableOpacity style={[styles.button, styles.submitButton]}>
           <Text style={styles.buttonText} onPress={handleUpload}>Submit</Text>
