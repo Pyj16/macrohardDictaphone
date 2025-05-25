@@ -13,6 +13,8 @@ import {useNavigation} from '@react-navigation/native';
 import {RouteProp, useRoute} from "@react-navigation/core";
 import {setParams} from "expo-router/build/global-state/routing";
 
+import RNRsa from 'react-native-rsa-native';
+
 export default function Personel() {
   const navigation = useNavigation();
 
@@ -34,9 +36,44 @@ export default function Personel() {
   function emptyFunction() {
   }
 
-  function readFromDB() {
 
+
+  async function readFromDB() {
+      const keyPair = await RNRsa.generateKeys(2048);
+
+//       fetch('http://192.168.1.177:5000/test-rsa', {
+//           method: 'POST',
+//           headers: {Accept: 'application/json','Content-Type': 'application/json'},
+//           body: JSON.stringify({
+//               "public_key": keyPair.public,
+//               })
+//           }).then( async (res) => res.json()).then(async (data) => {
+//                  console.log(typeof data.encrypted_key)
+//
+//                   const dcKey = await RNRsa.decrypt(data.encrypted_key, keyPair.private);
+//                   console.log('Decrypted key:', dcKey);
+// //                   const dcText = await AES.decrypt(data.encrypted_text, dcKey);
+// //                   console.log('Decrypted text:', dcText);
+//                   return;
+//                   }).catch( (err) => console.log(err));
+
+
+         let res = await fetch('http://192.168.1.177:5000/test-rsa', {
+                   method: 'POST',
+                   headers: {Accept: 'application/json','Content-Type': 'application/json'},
+                   body: JSON.stringify({
+                       "public_key": keyPair.public,
+                       })
+                   }).then( async (res) => res.json()).then(async (data) => {
+                          console.log(data.encrypted_key)
+                          await RNRsa.decrypt(data.encrypted_key, keyPair.private).then(dcKey => {
+                               console.log('Decrypted key:', dcKey);
+                              })
+                           return;
+                           }).catch( (err) => console.log(err));
   }
+
+
 
   function deleteTranscription(i: number){
     console.log("Rejecting transcription at" + i);
