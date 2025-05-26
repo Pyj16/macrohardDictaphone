@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "macrohardDictaphone",
-    "slug": "macrohardDictaphone",
+    "slug": "macroharddictaphone",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -13,7 +13,7 @@
       "googleAndroidClientId": "461690677221-4dhmdeimr572las0kuhof41tsv7ddodb.apps.googleusercontent.com",
       "router": {},
       "eas": {
-        "projectId": "ba8e2126-360d-4d58-8834-db56454636ce"
+        "projectId": "176b3c31-4e20-4280-b698-abd14b72a59a"
       }
     },
     "ios": {
@@ -25,7 +25,11 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.peklar.macrohardDictaphone"
+      "package": "com.peklar.macrohardDictaphone",
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -48,10 +52,18 @@
         {
           "iosUrlScheme": "com.googleusercontent.apps.461690677221-iiubqglurpquo77jp35cir0q47lcat4p"
         }
+      ],
+      "expo-audio",
+      [
+        "expo-dev-client",
+        {
+          "launchMode": "most-recent"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "owner": "ferimacrohard"
   }
 }
