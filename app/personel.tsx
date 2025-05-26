@@ -13,7 +13,11 @@ import {useNavigation} from '@react-navigation/native';
 import {RouteProp, useRoute} from "@react-navigation/core";
 import {setParams} from "expo-router/build/global-state/routing";
 
-import RNRsa from 'react-native-rsa-native';
+import { RSA } from 'react-native-rsa-native';
+
+import AesGcmCrypto from 'react-native-aes-gcm-crypto';
+import { Buffer } from 'buffer';
+
 
 export default function Personel() {
   const navigation = useNavigation();
@@ -33,13 +37,55 @@ export default function Personel() {
 
 
 
-  function emptyFunction() {
-  }
+    function emptyFunction() {
+    }
 
+    async function decryptAesGcm(encryptedBase64, binaryKey) {
 
+      const raw = Buffer.from(encryptedBase64, 'base64');
+      const keyHex = Buffer.from(binaryKey, 'base64').toString('hex');
+      console.log(binaryKey)
+      console.log("keyHex:", keyHex)
+
+      const keyBase64 = Buffer.from(keyHex, 'hex').toString('base64')
+      console.log('kayBase64 key:', keyBase64);
+
+      const keyBytes = Buffer.from(keyBase64, 'base64');
+      console.log(keyBytes.length);
+
+        const nonce = raw.slice(0, 12);
+        const tag = raw.slice(-16);
+        const ciphertext = raw.slice(12, raw.length - 16);
+
+        const nonceBase64 = nonce.toString('hex');
+        const tagBase64 = tag.toString('hex');
+        const ciphertextBase64 = ciphertext.toString('base64');
+
+        console.log('Nonce length:', Buffer.from(nonceBase64, 'base64').length);    // Must be 12
+        console.log('Tag length:', Buffer.from(tagBase64, 'base64').length);        // Must be 16
+
+      console.log("Nonce: ", nonce.toString('hex'))
+      console.log("ciphertext: ", ciphertext.toString('hex'))
+      console.log("ciphertext: ", ciphertext.toString('base64'))
+      console.log("tag: ", tag.toString('hex'))
+
+      try {
+        const decrypted = await AesGcmCrypto.decrypt(
+          ciphertextBase64,
+          keyBase64,
+          nonceBase64,
+          tagBase64,
+          false
+        );
+        console.log('Decrypted:', decrypted);
+        return decrypted;
+      } catch (err) {
+        console.error('AES-GCM decryption failed:', err);
+      }
+    }
 
   async function readFromDB() {
-      const keyPair = await RNRsa.generateKeys(2048);
+      const keyPair = await RSA.generateKeys(2048);
 
 //       fetch('http://192.168.1.177:5000/test-rsa', {
 //           method: 'POST',
@@ -56,19 +102,27 @@ export default function Personel() {
 // //                   console.log('Decrypted text:', dcText);
 //                   return;
 //                   }).catch( (err) => console.log(err));
-
+         const encrypted = await RSA.encrypt("Hello hi.", keyPair.public);
+         console.log("Encrypted: ",encrypted)
 
          let res = await fetch('http://192.168.1.177:5000/test-rsa', {
                    method: 'POST',
                    headers: {Accept: 'application/json','Content-Type': 'application/json'},
                    body: JSON.stringify({
                        "public_key": keyPair.public,
+                       "private_key": keyPair.private,
+                       "encrypted_key": encrypted,
                        })
                    }).then( async (res) => res.json()).then(async (data) => {
                           console.log(data.encrypted_key)
-                          await RNRsa.decrypt(data.encrypted_key, keyPair.private).then(dcKey => {
+//                           console.log(data.aes_key_hex)
+                          await RSA.decrypt64(data.encrypted_key, keyPair.private).then(async (dcKey) => {
+                              console.log(typeof dcKey)
                                console.log('Decrypted key:', dcKey);
+                               let decrypted = await decryptAesGcm(data.encrypted_text, dcKey);
+                               console.log(decrypted)
                               })
+
                            return;
                            }).catch( (err) => console.log(err));
   }
