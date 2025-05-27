@@ -17,6 +17,9 @@ import { RSA } from 'react-native-rsa-native';
 
 import AesGcmCrypto from 'react-native-aes-gcm-crypto';
 import { Buffer } from 'buffer';
+import { public_key } from '@/app/key.ts'
+import RNRsa from 'react-native-rsa-native';
+import 'react-native-get-random-values';
 
 
 export default function Personel() {
@@ -32,10 +35,64 @@ export default function Personel() {
   // Essentially gets called whenever redirect is sent to this page.
   useEffect(() => {
     setTranscriptions(route.params.transcriptions);
-
   }, [route.params.transcriptions]);
 
+  async function updateAnamnesis() {
 
+    const array = new Uint8Array(32);
+    console.log("array: ", array)
+    crypto.getRandomValues(array);
+//     console.log("array: ", array)
+    const aesKeyBase64 = Buffer.from(array).toString('base64');
+    console.log("aesKeyBase64: ", aesKeyBase64)
+    console.log("aesKeyBase64: ",typeof aesKeyBase64)
+    console.log("public_key: ", public_key)
+    console.log("public_key: ",typeof public_key)
+    let encrypted_text = ''
+    try {
+        AesGcmCrypto.encrypt('changed text', false, aesKeyBase64).then(async (result) => {
+          console.log(result)
+          const encrypted_key = await RSA.encrypt(aesKeyBase64, public_key);
+          console.log(typeof encrypted_key)
+          console.log("encrypted_key: ",encrypted_key)
+
+          console.log(result);
+          const ivBytes = Buffer.from(result['iv'], 'hex')
+          const contentBytes = Buffer.from(result['content'], 'base64')
+          const tagBytes = Buffer.from(result['tag'], 'hex')
+
+          const combined = Buffer.concat([ivBytes, contentBytes, tagBytes])
+          console.log(combined)
+          console.log(ivBytes)
+          console.log(contentBytes)
+          console.log(tagBytes)
+          console.log(typeof combined)
+
+          encrypted_text = combined.toString('base64')
+          console.log(encrypted_key.length)
+          console.log(encrypted_text)
+
+          console.log('attempting send')
+          fetch('http://192.168.1.177:5000/test-rsa-update', {
+             method: 'POST',
+             headers: {Accept: 'application/json','Content-Type': 'application/json'},
+             body: JSON.stringify({
+                 "encrypted_key": encrypted_key,
+                 "encrypted_text": encrypted_text,
+                 "patientid": "1",
+                 })
+             }).then( async (res) => res.json()).then(async (r)=>{
+                 console.log(r);
+                 console.log('send finished')
+                 return;
+                 }).catch((err) => console.log(err));
+
+        });
+      }
+      catch (err) {
+        console.error('AES-GCM encryption failed:', err);
+      }
+    }
 
     function emptyFunction() {
     }
@@ -87,40 +144,23 @@ export default function Personel() {
   async function readFromDB() {
       const keyPair = await RSA.generateKeys(2048);
 
-//       fetch('http://192.168.1.177:5000/test-rsa', {
-//           method: 'POST',
-//           headers: {Accept: 'application/json','Content-Type': 'application/json'},
-//           body: JSON.stringify({
-//               "public_key": keyPair.public,
-//               })
-//           }).then( async (res) => res.json()).then(async (data) => {
-//                  console.log(typeof data.encrypted_key)
-//
-//                   const dcKey = await RNRsa.decrypt(data.encrypted_key, keyPair.private);
-//                   console.log('Decrypted key:', dcKey);
-// //                   const dcText = await AES.decrypt(data.encrypted_text, dcKey);
-// //                   console.log('Decrypted text:', dcText);
-//                   return;
-//                   }).catch( (err) => console.log(err));
-         const encrypted = await RSA.encrypt("Hello hi.", keyPair.public);
-         console.log("Encrypted: ",encrypted)
-
          let res = await fetch('http://192.168.1.177:5000/test-rsa', {
                    method: 'POST',
                    headers: {Accept: 'application/json','Content-Type': 'application/json'},
                    body: JSON.stringify({
                        "public_key": keyPair.public,
-                       "private_key": keyPair.private,
-                       "encrypted_key": encrypted,
                        })
                    }).then( async (res) => res.json()).then(async (data) => {
                           console.log(data.encrypted_key)
-//                           console.log(data.aes_key_hex)
                           await RSA.decrypt64(data.encrypted_key, keyPair.private).then(async (dcKey) => {
-                              console.log(typeof dcKey)
                                console.log('Decrypted key:', dcKey);
                                let decrypted = await decryptAesGcm(data.encrypted_text, dcKey);
                                console.log(decrypted)
+
+                               let newTranscriptions = [...transcriptions]
+                               newTranscriptions.push(decrypted)
+
+                               setTranscriptions(newTranscriptions)
                               })
 
                            return;
@@ -168,6 +208,11 @@ export default function Personel() {
 
         <TouchableOpacity style={styles.button} onPress={readFromDB}>
           <Text style={styles.buttonText}>Read From DB</Text>
+        </TouchableOpacity>
+
+
+        <TouchableOpacity style={styles.button} onPress={updateAnamnesis}>
+          <Text style={styles.buttonText}>Update DB</Text>
         </TouchableOpacity>
 
         {
