@@ -10,7 +10,13 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "security:audit": "npm audit",
+    "security:audit-fix": "npm audit fix",
+    "security:audit-report": "npm audit --json > security-audit-report.json",
+    "security:check-licenses": "npx license-checker --summary",
+    "security:outdated": "npm outdated",
+    "security:full-check": "npm run security:audit && npm run security:outdated && npm run security:check-licenses"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
