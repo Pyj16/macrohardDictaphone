@@ -4,10 +4,11 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
 import { IconSymbol } from '@/components/ui/IconSymbol';
 import {RouteProp, useRoute} from "@react-navigation/core";
+import { useEffect, useState } from 'react';
 
 export default function DrawerLayout() {
   const colorScheme = useColorScheme();
-  const route: RouteProp<{params: {recordings: []}}> = useRoute();
+  const route: RouteProp<{params: {recordingSession}}> = useRoute();
 
   return (
     <Drawer
@@ -22,7 +23,7 @@ export default function DrawerLayout() {
     >
       <Drawer.Screen
         name="index"
-        initialParams={route.params}
+        initialParams={route.params? route.params : 0}
         options={{
           title: 'Home',
           drawerIcon: ({ color, size }) => (

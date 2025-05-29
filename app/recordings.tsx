@@ -13,37 +13,42 @@ import { useAudioPlayer } from 'expo-audio';
 import {useNavigation} from '@react-navigation/native';
 import { Stack, usePathname, Redirect, Slot } from 'expo-router';
 
+import axios from 'axios';
+
 import * as FileSystem from 'expo-file-system';
 import { StorageAccessFramework } from 'expo-file-system';
 import React from "react";
+
+import { sha256, sha256Bytes } from 'react-native-sha256';
 
 export default function Recordings() {
   const navigation = useNavigation();
 
   const [statusText, setStatusText] = React.useState("Idle")
-  const route: RouteProp<{params: {recordings: []}}> = useRoute();
-  const [recordings, setRecordings]= React.useState(route.params.recordings);
+  const route: RouteProp<{params: {recordingSession}}> = useRoute();
+  const [recordingSession, setRecordingSession] = React.useState(route.params.recordingSession)
+  const [recordings, setRecordings]= React.useState(recordingSession.recordings);
 
   const player = useAudioPlayer();
 
   const recordingsDir = FileSystem.documentDirectory + 'recordings/'
 
     function playRecordingAt(i: number){
-        const audioPath = recordingsDir + recordings.at(i)
+        const audioPath = recordings.at(i)
+        console.log("Playing: ", recordings.at(i))
         player.replace(audioPath);
         player.play();
     }
 
     useEffect(() => {
         handleLocalRead()
-        }, [route.params])
+        }, [route])
 
     useEffect(() => {
     const backAction = () => {
-//       console.log("Back Button Hit")
-      console.log("Sending recordings", recordings)
+      console.log("Sending recordings session", recordingSession)
       navigation.navigate("(drawer)", {
-        recordings: recordings,
+        sessionId: recordingSession.sessionId,
       })
       return true;
     };
@@ -56,21 +61,37 @@ export default function Recordings() {
     return () => backHandler.remove();
   }, []);
 
+  async function saveSession(){
+    let sessionName = 'session-' + recordingSession.sessionId
+    let sessionPath = FileSystem.documentDirectory + 'sessions/' + sessionName
+    FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'sessions/', {intermediates: true})
+    const data = JSON.stringify(recordingSession)
+    console.log("new session data for", sessionName, ":", data)
+    await FileSystem.writeAsStringAsync(sessionPath, data)
+  }
+
+  React.useEffect(() => {
+      saveSession()
+    }, [recordingSession]);
+
   async function deleteRecordingAt(i: number){
-        const audioPath = recordingsDir + recordings.at(i)
-        await FileSystem.deleteAsync(audioPath)
+        await FileSystem.deleteAsync(recordings.at(i))
         handleLocalRead()
   }
 
   function rearrangeRecordings(i: number, j: number){
     if (i == 0 || j > recordings.length - 1)
       return;
-    let newRecordings = recordings;
+    let newRecordings = [...recordings];
     let swapped = newRecordings[i];
     newRecordings[i] = newRecordings[j];
     newRecordings[j] = swapped;
     // @ts-ignore
-    setParams(newRecordings)
+    setRecordings(newRecordings)
+    setRecordingSession({
+        ...recordingSession,
+        recordings: newRecordings,
+        })
   }
 
     async function handleLocalRead (){
@@ -79,40 +100,69 @@ export default function Recordings() {
       let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'recordings');
       console.log('fetched files');
       console.log(files);
-      setRecordings(files)
-        }
+      recordingPaths = []
+      files.map((f) => {
+          filePath = FileSystem.documentDirectory + 'recordings/' + f
+          if(route.params.recordingSession.recordings.includes(filePath))
+            recordingPaths.push(filePath)
+          })
+      console.log(recordingPaths)
+      setRecordings(recordingPaths)
+      setRecordingSession({
+          ...recordingSession,
+          recordings: recordingPaths,
+          })
+    }
 
   const handleUpload = async () => {
-    let body = new FormData();
-    // @ts-ignore
-    recordings.map(async (recording) => {
-      // @ts-ignore
-      let contentUri = await FileSystem.getContentUriAsync(recording.file)
-      setStatusText(contentUri)
+    console.log('starting handle')
+    let audioSegments = []
+    let form = new FormData()
+    let i = 1
+    for(let recording of recordingSession.recordings)
+    {
+        console.log('processing recording: ', recording)
+        const uri = await FileSystem.getContentUriAsync(recording)
+        console.log(uri)
+        setStatusText('content uri: ',uri)
+        form.append("audio_files", {
+            uri: uri,
+            name: 'audio' + i + '.m4a', // TO-DO: Use library to determine file type
+            type: 'audio/mpeg',
+          })
+        i++;
+    }
 
-      // @ts-ignore
-      body.append("audio_file", {
-        // @ts-ignore
-        uri: contentUri,
-        name: 'audio.mp3',
-        type: 'audio/mpeg',
-      });
+    const hashedId = await sha256(recordingSession.patientId).then( hash => {
+        console.log("hash",hash);
+        return hash
     })
+    console.log(hashedId)
+    form.append("id_", hashedId)
+    form.append("title", recordingSession.title)
 
-    console.log(body)
+    console.log(form)
 
-    // Local
-    let xhr = new XMLHttpRequest();
-    xhr.open('POST', 'http://127.0.0.1:5000/transcribe', true);
-    xhr.setRequestHeader("Accept", "*");
-    xhr.send(body);
 
-    // Working
-    // let xhr = new XMLHttpRequest();
-    // xhr.open('POST', 'https://154b-46-122-66-48.ngrok-free.app/transcribe', true);
-    // xhr.setRequestHeader("Accept", "*");
-    // xhr.send(body);
-
+    console.log('attempting send')
+//     const {data} = await axios.post('http://192.168.1.177:5000/test-multiple-recordings', {
+//         id_: hashedId,
+//         title: recordingSession.title,
+//         audio_files: form
+//       }, {
+//         headers: {
+//           'Content-Type': 'multipart/form-data'
+//         }
+//       }
+//     )
+    fetch('http://192.168.1.177:5000/test-multiple-recordings', {
+              method: 'POST',
+              headers: {Accept: '*'},
+              body: form,
+              }).then( async (res) => res.json()).then((data)=>{
+                      console.log(data)
+                      return;
+                      }).catch((err) => console.log(err));
   };
 
   return (

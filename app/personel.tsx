@@ -154,8 +154,10 @@ export default function Personel() {
                           console.log(data.encrypted_key)
                           await RSA.decrypt64(data.encrypted_key, keyPair.private).then(async (dcKey) => {
                                console.log('Decrypted key:', dcKey);
-                               let decrypted = await decryptAesGcm(data.encrypted_text, dcKey);
+                               let decrypted = await decryptAesGcm(data.encrypted_data, dcKey);
                                console.log(decrypted)
+
+                               let anamnesisList = JSON.parse(decrypted)
 
                                let newTranscriptions = [...transcriptions]
                                newTranscriptions.push(decrypted)

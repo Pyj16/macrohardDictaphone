@@ -20,8 +20,24 @@ import {
 import {RouteProp, useRoute} from "@react-navigation/core";
 import {setParams} from "expo-router/build/global-state/routing";
 
+const testSession1 = {
+    sessionId: '0',
+    patientId: '1',
+    title: 'AnaTitle',
+    recordings: []
+    }
+
+const testSession2 = {
+    sessionId: '1337',
+    patientId: '2',
+    title: 'TitleAna',
+    recordings: []
+    }
+
 export default function HomeScreen() {
   const navigation = useNavigation();
+  const route: RouteProp<{params: {sessionId: number}}> = useRoute();
+  const [recordingSession, setRecordingSession] = React.useState(testSession2);
 
   // Button logic
   enum Status {
@@ -38,18 +54,14 @@ export default function HomeScreen() {
   // Debug status
   const [statusText, setStatusText] = React.useState<string>("Idle");
 
-
   // New Implementation
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = React.useState(false);
-  const route: RouteProp<{params: {recordings: []}}> = useRoute();
-  const [recordings, setRecordings] = React.useState([]);
 
   const startRecording = async () => {
     await audioRecorder.prepareToRecordAsync();
     audioRecorder.record();
     setIsRecording(true);
-//     console.log(audioRecorder.uri)
   };
 
   const stopRecording = async () => {
@@ -65,23 +77,38 @@ export default function HomeScreen() {
             to: filePath
         })
 
-    console.log(filePath)
-
-
-    let newRecording = {
-        file: filePath
-        }
-    let newRecordings = [...recordings]
+    let newRecording = filePath
+    let newRecordings = [...recordingSession.recordings]
     newRecordings.push(newRecording)
-    setRecordings(newRecordings)
+
+    setRecordingSession({
+        ...recordingSession,
+        recordings: newRecordings,
+        })
+
+
+    console.log(filePath)
+    console.log(recordingSession.recordings)
+
   };
 
   React.useEffect(() => {
-      if(route?.params?.recordings !== undefined){
-        setRecordings(route.params.recordings)
-          }
-      }, [route.params])
+        saveSession()
+  }, [recordingSession]);
 
+  React.useEffect(() => {
+      const id = route.params.sessionId ? route.params.sessionId : 1337
+      loadSession(id)
+  }, [route])
+
+  async function saveSession(){
+      let sessionName = 'session-' + recordingSession.sessionId
+              let sessionPath = FileSystem.documentDirectory + 'sessions/' + sessionName
+              FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'sessions/', {intermediates: true})
+              const data = JSON.stringify(recordingSession)
+              console.log("new session data for", sessionName, ":", data)
+              await FileSystem.writeAsStringAsync(sessionPath, data)
+      }
   React.useEffect(() => {
     (async () => {
       const stat = await AudioModule.requestRecordingPermissionsAsync();
@@ -108,6 +135,24 @@ export default function HomeScreen() {
     }
   }
 
+  async function loadSession(i: number){
+       let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'sessions');
+       console.log(files);
+       let sessionPath = ''
+       files.map(async (f) => {
+           filePath = FileSystem.documentDirectory + 'sessions/' + f
+           const checkSesh = 'session-' + i
+           console.log('comparing', checkSesh, "with", f)
+           if(checkSesh === f)
+             sessionPath = filePath
+           })
+       FileSystem.readAsStringAsync(sessionPath).then((data) => {
+            console.log(data)
+            setRecordingSession(JSON.parse(data))
+           }
+       ).catch((e) => console.log(e))
+  }
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
@@ -128,20 +173,18 @@ export default function HomeScreen() {
           <Text style={styles.buttonText}>{buttonText}</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity style={styles.button} onPress={() => loadSession(0)}>
+                  <Text style={styles.buttonText}>Load session 0</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText} onPress={
             // @ts-ignore
             () => navigation.navigate("recordings", {
-              recordings: recordings,
-            })}>Recordings</Text>
+                    recordingSession: recordingSession,
+                })}>Recordings</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.button}>
-                  <Text style={styles.buttonText} onPress={() =>{
-                    console.log(route.params)
-                      }
-                    }>Params</Text>
-                </TouchableOpacity>
       </ThemedView>
     </ParallaxScrollView>
   );
