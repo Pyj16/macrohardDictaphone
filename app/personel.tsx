@@ -20,6 +20,7 @@ import { Buffer } from 'buffer';
 import { public_key } from '@/app/key.ts'
 import RNRsa from 'react-native-rsa-native';
 import 'react-native-get-random-values';
+import { sha256, sha256Bytes } from 'react-native-sha256';
 
 
 export default function Personel() {
@@ -29,6 +30,7 @@ export default function Personel() {
 
   const originalTransactions = route.params.transcriptions;
   const [transcriptions, setTranscriptions] = React.useState(route.params.transcriptions);
+  const [anamnesisList, setAnamnesisList] = React.useState([]);
   const approvedTranscriptions = [];
   const rejectedTranscriptions = [];
 
@@ -37,40 +39,48 @@ export default function Personel() {
     setTranscriptions(route.params.transcriptions);
   }, [route.params.transcriptions]);
 
+
   async function updateAnamnesis() {
 
     const array = new Uint8Array(32);
-    console.log("array: ", array)
+//     console.log("array: ", array)
     crypto.getRandomValues(array);
 //     console.log("array: ", array)
     const aesKeyBase64 = Buffer.from(array).toString('base64');
-    console.log("aesKeyBase64: ", aesKeyBase64)
-    console.log("aesKeyBase64: ",typeof aesKeyBase64)
-    console.log("public_key: ", public_key)
-    console.log("public_key: ",typeof public_key)
+//     console.log("aesKeyBase64: ", aesKeyBase64)
+//     console.log("aesKeyBase64: ",typeof aesKeyBase64)
+//     console.log("public_key: ", public_key)
+//     console.log("public_key: ",typeof public_key)
     let encrypted_text = ''
     try {
-        AesGcmCrypto.encrypt('changed text', false, aesKeyBase64).then(async (result) => {
-          console.log(result)
+        AesGcmCrypto.encrypt('Slightly less placeholder text', false, aesKeyBase64).then(async (result) => {
+//           console.log(result)
           const encrypted_key = await RSA.encrypt(aesKeyBase64, public_key);
-          console.log(typeof encrypted_key)
-          console.log("encrypted_key: ",encrypted_key)
+//           console.log(typeof encrypted_key)
+//           console.log("encrypted_key: ",encrypted_key)
 
-          console.log(result);
+//           console.log(result);
           const ivBytes = Buffer.from(result['iv'], 'hex')
           const contentBytes = Buffer.from(result['content'], 'base64')
           const tagBytes = Buffer.from(result['tag'], 'hex')
 
           const combined = Buffer.concat([ivBytes, contentBytes, tagBytes])
-          console.log(combined)
-          console.log(ivBytes)
-          console.log(contentBytes)
-          console.log(tagBytes)
-          console.log(typeof combined)
+//           console.log(combined)
+//           console.log(ivBytes)
+//           console.log(contentBytes)
+//           console.log(tagBytes)
+//           console.log(typeof combined)
 
           encrypted_text = combined.toString('base64')
-          console.log(encrypted_key.length)
-          console.log(encrypted_text)
+//           console.log(encrypted_key.length)
+//           console.log(encrypted_text)
+
+          console.log(anamnesisList.at(1).id_patient.toString())
+          const hashedId = await sha256(anamnesisList.at(1).id_patient.toString()).then( hash => {
+                  console.log("hash",hash);
+                  return hash
+              }).catch((e) => {console.log(e)})
+          console.log(hashedId)
 
           console.log('attempting send')
           fetch('http://192.168.1.177:5000/test-rsa-update', {
@@ -79,7 +89,8 @@ export default function Personel() {
              body: JSON.stringify({
                  "encrypted_key": encrypted_key,
                  "encrypted_text": encrypted_text,
-                 "patientid": "1",
+                 "patient_id": hashedId,
+                 "anamnesis_id": anamnesisList.at(1).id_anamnesis,
                  })
              }).then( async (res) => res.json()).then(async (r)=>{
                  console.log(r);
@@ -144,7 +155,7 @@ export default function Personel() {
   async function readFromDB() {
       const keyPair = await RSA.generateKeys(2048);
 
-         let res = await fetch('http://192.168.1.177:5000/test-rsa', {
+         let res = await fetch('http://192.168.1.177:5000/fetch-anamnesis', {
                    method: 'POST',
                    headers: {Accept: 'application/json','Content-Type': 'application/json'},
                    body: JSON.stringify({
@@ -154,15 +165,19 @@ export default function Personel() {
                           console.log(data.encrypted_key)
                           await RSA.decrypt64(data.encrypted_key, keyPair.private).then(async (dcKey) => {
                                console.log('Decrypted key:', dcKey);
-                               let decrypted = await decryptAesGcm(data.encrypted_data, dcKey);
-                               console.log(decrypted)
 
-                               let anamnesisList = JSON.parse(decrypted)
-
-                               let newTranscriptions = [...transcriptions]
-                               newTranscriptions.push(decrypted)
-
+                               const newAnamnesisList = []
+                               const newTranscriptions = [...transcriptions]
+                               for(let a of data.anamnesis){
+                                   let decrypted = await decryptAesGcm(a.contents, dcKey);
+                                   console.log(decrypted)
+                                   a.contents = decrypted
+                                   newTranscriptions.push(decrypted)
+                                   newAnamnesisList.push(a)
+                               }
                                setTranscriptions(newTranscriptions)
+                               setAnamnesisList(newAnamnesisList)
+                               console.log('done everything')
                               })
 
                            return;
