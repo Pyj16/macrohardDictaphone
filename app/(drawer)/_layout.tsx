@@ -34,7 +34,7 @@ export default function DrawerLayout() {
       <Drawer.Screen
         name="statistics"
         options={{
-          title: 'Stats',
+          title: 'Statistics',
           drawerIcon: ({ color, size }) => (
             <IconSymbol name="chart.bar.fill" color={color} size={size} />
           ),

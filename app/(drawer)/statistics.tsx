@@ -5,9 +5,12 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
-  ActivityIndicator
+  ActivityIndicator,
+  TextInput,
+  TouchableOpacity,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Picker } from '@react-native-picker/picker';
 
 const SERVER_URL = 'http://192.168.64.30:5000';
 
@@ -16,46 +19,72 @@ export default function Statistics() {
   const [hospitalStats, setHospitalStats] = useState([]);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const fetchStats = async () => {
-    try {
-      const token = await AsyncStorage.getItem('accessToken');
+  const [activeTab, setActiveTab] = useState<'doctor' | 'hospital'>('doctor');
 
-      const [docRes, hospRes] = await Promise.all([
-        fetch(`${SERVER_URL}/stats/doctors`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-        fetch(`${SERVER_URL}/stats/hospitals`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }),
-      ]);
+  const [doctorSearch, setDoctorSearch] = useState('');
+  const [doctorSort, setDoctorSort] = useState('name');
+  const [hospitalSort, setHospitalSort] = useState('name');
 
-      const [docData, hospData] = await Promise.all([
-        docRes.json(),
-        hospRes.json(),
-      ]);
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
 
-      if (!Array.isArray(docData)) {
-        throw new Error('Doctor stats response is not an array');
+        const [docRes, hospRes] = await Promise.all([
+          fetch(`${SERVER_URL}/stats/doctors`, {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          }),
+          fetch(`${SERVER_URL}/stats/hospitals`, {
+            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          }),
+        ]);
+
+        const [docData, hospData] = await Promise.all([docRes.json(), hospRes.json()]);
+
+        setDoctorStats(docData);
+        setHospitalStats(hospData);
+      } catch (error) {
+        console.error('Error fetching statistics:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setDoctorStats(docData);
-      setHospitalStats(hospData);
-    } catch (error) {
-      console.error('Error fetching statistics:', error);
-    } finally {
-      setLoading(false);
+    fetchStats();
+  }, []);
+
+  const filteredDoctors = [...doctorStats]
+    .filter(d =>
+      `${d.name} ${d.surname}`.toLowerCase().includes(doctorSearch.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (doctorSort) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'patients':
+          return b.n_patients - a.n_patients;
+        case 'anamnesis':
+          return b.n_anamnesis - a.n_anamnesis;
+        default:
+          return 0;
+      }
+    });
+
+  const sortedHospitals = [...hospitalStats].sort((a, b) => {
+    switch (hospitalSort) {
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'patients':
+        return b.n_patients - a.n_patients;
+      case 'doctors':
+        return b.n_doctors - a.n_doctors;
+      case 'anamnesis':
+        return b.n_anamnesis - a.n_anamnesis;
+      default:
+        return 0;
     }
-  };
+  });
 
-  fetchStats();
-}, []);
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
@@ -67,63 +96,117 @@ useEffect(() => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.heading}>Doctor Statistics</Text>
-        {doctorStats.map((item, index) => (
-          <View key={`doc-${index}`} style={styles.card}>
-            <Text style={styles.title}>{item.name} {item.surname}</Text>
-            <Text style={styles.text}>Email: {item.email}</Text>
-            <Text style={styles.text}>Patients: {item.n_patients}</Text>
-            <Text style={styles.text}>Anamnesis: {item.n_anamnesis}</Text>
-          </View>
-        ))}
+      {/* Tab Selector */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'doctor' && styles.activeTab]}
+          onPress={() => setActiveTab('doctor')}
+        >
+          <Text style={styles.tabText}>Doctor Stats</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'hospital' && styles.activeTab]}
+          onPress={() => setActiveTab('hospital')}
+        >
+          <Text style={styles.tabText}>Hospital Stats</Text>
+        </TouchableOpacity>
+      </View>
 
-        <Text style={styles.heading}>Hospital Statistics</Text>
-        {hospitalStats.map((item, index) => (
-          <View key={`hosp-${index}`} style={styles.card}>
-            <Text style={styles.title}>{item.name}</Text>
-            <Text style={styles.text}>Patients: {item.n_patients}</Text>
-            <Text style={styles.text}>Doctors: {item.n_doctors}</Text>
-            <Text style={styles.text}>Anamnesis: {item.n_anamnesis}</Text>
-          </View>
-        ))}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {activeTab === 'doctor' ? (
+          <>
+            <TextInput
+              placeholder="Search doctors..."
+              value={doctorSearch}
+              onChangeText={setDoctorSearch}
+              style={styles.searchInput}
+            />
+            <Picker
+              selectedValue={doctorSort}
+              onValueChange={setDoctorSort}
+              style={styles.picker}
+            >
+              <Picker.Item label="Sort by Name" value="name" />
+              <Picker.Item label="Sort by number of Patients" value="patients" />
+              <Picker.Item label="Sort by number of Anamnesis" value="anamnesis" />
+            </Picker>
+            {filteredDoctors.map((item, index) => (
+              <View key={`doc-${index}`} style={styles.card}>
+                <Text style={styles.title}>{item.name} {item.surname}</Text>
+                <Text style={styles.text}>Email: {item.email}</Text>
+                <Text style={styles.text}>Patients: {item.n_patients}</Text>
+                <Text style={styles.text}>Anamnesis: {item.n_anamnesis}</Text>
+              </View>
+            ))}
+          </>
+        ) : (
+          <>
+            <Picker
+              selectedValue={hospitalSort}
+              onValueChange={setHospitalSort}
+              style={styles.picker}
+            >
+              <Picker.Item label="Sort by Name" value="name" />
+              <Picker.Item label="Sort by number of Patients" value="patients" />
+              <Picker.Item label="Sort by number of Doctors" value="doctors" />
+              <Picker.Item label="Sort by number of Anamnesis" value="anamnesis" />
+            </Picker>
+            {sortedHospitals.map((item, index) => (
+              <View key={`hosp-${index}`} style={styles.card}>
+                <Text style={styles.title}>{item.name}</Text>
+                <Text style={styles.text}>Patients: {item.n_patients}</Text>
+                <Text style={styles.text}>Doctors: {item.n_doctors}</Text>
+                <Text style={styles.text}>Anamnesis: {item.n_anamnesis}</Text>
+              </View>
+            ))}
+          </>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f4f4f4'
+  container: { flex: 1, backgroundColor: '#f4f4f4' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scrollContent: { padding: 16 },
+  tabContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#eee',
   },
-  scrollContent: {
-    padding: 16
+  tabButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: '#ccc',
+    marginHorizontal: 5,
   },
-  heading: {
-    fontSize: 20,
+  activeTab: {
+    backgroundColor: '#007AFF',
+  },
+  tabText: {
+    color: '#fff',
     fontWeight: 'bold',
-    marginVertical: 12
+  },
+  searchInput: {
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  picker: {
+    backgroundColor: '#fff',
+    marginBottom: 15,
   },
   card: {
     backgroundColor: '#fff',
     padding: 14,
     marginBottom: 12,
     borderRadius: 8,
-    elevation: 2
+    elevation: 2,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4
-  },
-  text: {
-    fontSize: 14,
-    color: '#333'
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  }
+  title: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
+  text: { fontSize: 14, color: '#333' },
 });
