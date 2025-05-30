@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   ActivityIndicator
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SERVER_URL = 'http://192.168.64.30:5000';
 
@@ -15,31 +16,46 @@ export default function Statistics() {
   const [hospitalStats, setHospitalStats] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [docRes, hospRes] = await Promise.all([
-          fetch(`${SERVER_URL}/stats/doctors`),
-          fetch(`${SERVER_URL}/stats/hospitals`)
-        ]);
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const token = await AsyncStorage.getItem('accessToken');
 
-        const [docData, hospData] = await Promise.all([
-          docRes.json(),
-          hospRes.json()
-        ]);
+      const [docRes, hospRes] = await Promise.all([
+        fetch(`${SERVER_URL}/stats/doctors`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+        fetch(`${SERVER_URL}/stats/hospitals`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }),
+      ]);
 
-        setDoctorStats(docData);
-        setHospitalStats(hospData);
-      } catch (error) {
-        console.error('Error fetching statistics:', error);
-      } finally {
-        setLoading(false);
+      const [docData, hospData] = await Promise.all([
+        docRes.json(),
+        hospRes.json(),
+      ]);
+
+      if (!Array.isArray(docData)) {
+        throw new Error('Doctor stats response is not an array');
       }
-    };
 
-    fetchStats();
-  }, []);
+      setDoctorStats(docData);
+      setHospitalStats(hospData);
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  fetchStats();
+}, []);
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>

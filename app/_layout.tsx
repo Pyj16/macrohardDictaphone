@@ -16,7 +16,6 @@ export default function RootLayout() {
   });
 
   if (!loaded) {
-    // Async font loading only occurs in development.
     return null;
   }
 
@@ -30,10 +29,11 @@ export default function RootLayout() {
   );
 }
 function RootNavigation() {
-  const { userInfo } = useAuth();
+  const { userInfo, loading } = useAuth();
   const pathname = usePathname();
 
   const isInAuthGroup = pathname.startsWith('/login');
+  if (loading) return null;
 
   if (!userInfo && !isInAuthGroup) {
     return <Redirect href="/login" />;
