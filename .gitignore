@@ -37,3 +37,7 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
+
+# SonarQube
+.scannerwork/
+sonar-project.properties.local

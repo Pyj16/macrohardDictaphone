@@ -2,30 +2,39 @@ import React, { useEffect } from 'react';
 import {
   View,
   Text,
-  Button,
-  StyleSheet,
-  useWindowDimensions,
   TouchableOpacity,
   Platform,
   SafeAreaView,
-  Image
+  StyleSheet,
+  useWindowDimensions,
+  Image,
 } from 'react-native';
 import { useAuth } from '../services/authContext';
 import { useRouter } from 'expo-router';
-import logo from '../../assets/images/logo.png'
+import logo from '../../assets/images/logo.png';
 
 export default function LoginScreen() {
-    const { signIn, userInfo } = useAuth();
-    const router = useRouter();
-    const { width } = useWindowDimensions();
+  const { signIn, userInfo, loading } = useAuth();
+  const router = useRouter();
+  const { width } = useWindowDimensions();
 
-  useEffect(() => {
-    if (userInfo?.role === 'doctor') {
-      router.replace('/');
-    } else if (userInfo?.role === 'personel') {
-      router.replace('/');
-    }
-  }, [userInfo]);
+useEffect(() => {
+  if (!loading && userInfo?.role) {
+    console.log("Redirecting user with role:", userInfo.role); // To deletni potem
+    router.replace('/');
+    console.log("userInfo:", userInfo, "loading:", loading);// To deletni potem
+
+  }
+}, [loading, userInfo]);
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Restoring session...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -34,12 +43,7 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>Please sign in to continue</Text>
 
         <TouchableOpacity style={styles.signInButton} onPress={signIn}>
-            <Image
-                source={logo}
-                style={styles.googleLogo}
-            />
-          <Text style={styles.signInText}>
-          </Text>
+          <Image source={logo} style={styles.googleLogo} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -67,10 +71,18 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     color: '#666',
   },
-googleLogo: {
-  width: 240,
-  height: 48,
-  resizeMode: 'contain',
-},
-
+  googleLogo: {
+    width: 240,
+    height: 48,
+    resizeMode: 'contain',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#333',
+  },
 });
