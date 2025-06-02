@@ -6,6 +6,12 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+import Entypo from '@expo/vector-icons/Entypo';
+import { styled } from 'nativewind';
+import { Pressable } from 'react-native';
+
+import '@/global.css';
+
 import React from "react";
 import { useAudioRecorder, RecordingOptions, AudioModule, RecordingPresets } from 'expo-audio';
 import {useNavigation} from '@react-navigation/native';
@@ -33,6 +39,9 @@ const testSession2 = {
     title: 'TitleAna',
     recordings: []
     }
+//
+// const StyledView = styled(View);
+// const StyledTouchableOpacity = styled(TouchableOpacity);
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -44,12 +53,15 @@ export default function HomeScreen() {
     idle,
     recording,
     replaying,
+    inactive,
   }
 
-  const [status, setStatus] = React.useState(Status.idle);
-  const [buttonText, setButtonText] = React.useState('Record');
-  const [buttonStyle, setButtonStyle] = React.useState([styles.recordButton, styles.recordButtonIdle]);
+  const [status, setStatus] = React.useState(Status.inactive);
+  const [buttonStyle, setButtonStyle] = React.useState("bg-green-500");
   // Button logic
+
+  // Session status
+  const [sessionText, setSessionText] = React.useState()
 
   // Debug status
   const [statusText, setStatusText] = React.useState<string>("Idle");
@@ -97,7 +109,7 @@ export default function HomeScreen() {
   }, [recordingSession]);
 
   React.useEffect(() => {
-      const id = route.params.sessionId ? route.params.sessionId : 1337
+      const id = route.params.sessionId
       loadSession(id)
   }, [route])
 
@@ -118,23 +130,6 @@ export default function HomeScreen() {
     })();
   }, []);
 
-  function handleButtonUpdate(){
-    if(status == Status.idle){
-      setStatus(Status.recording);
-      startRecording();
-      setButtonStyle([styles.recordButton, styles.recordButtonActive])
-      setButtonText('Stop')
-      setStatusText("Recording...")
-    }
-    if(status == Status.recording){
-      setStatus(Status.idle);
-      stopRecording();
-      setButtonStyle([styles.recordButton, styles.recordButtonIdle]);
-      setButtonText('Record')
-      setStatusText("Idle");
-    }
-  }
-
   async function loadSession(i: number){
        let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'sessions');
        console.log(files);
@@ -148,45 +143,78 @@ export default function HomeScreen() {
            })
        FileSystem.readAsStringAsync(sessionPath).then((data) => {
             console.log(data)
-            setRecordingSession(JSON.parse(data))
+            let objectData = JSON.parse(data)
+            setRecordingSession(objectData)
+            setStatus(Status.idle)
+            setSessionText("Session: " + objectData.title)
            }
        ).catch((e) => console.log(e))
   }
 
+
+  function handleButtonUpdate(){
+    if(status == Status.idle){
+      setStatus(Status.recording);
+      startRecording();
+      setButtonStyle("bg-red-500");
+      setStatusText("Recording...")
+    }
+    if(status == Status.recording){
+      setStatus(Status.idle);
+      stopRecording();
+      setButtonStyle("bg-green-500")
+      setStatusText("Idle");
+    }
+    if(status == Status.inactive){
+//       setStatus(Status.idle);
+      setSessionText("No session active. Select or create one.")
+      setButtonStyle("bg-gray-500");
+      setStatusText("Idle");
+    }
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
-      headerImage={
-        <Image
-          style={styles.background}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Medicinski diktafon</ThemedText>
-      </ThemedView>
+    <View className="flex-1">
+        <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}>
+          {/* Audio Interface UI */}
+          <ThemedView className="flex-1 items-center space-y-4 pb-40">
+            <Text>{sessionText}</Text>
+            <TouchableOpacity className="py-3 px-4 bg-blue-500 rounded-lg w-40 items-center"
+                onPress={() => navigation.navigate('sessions') }
+            >
+              <Text>Sessions</Text>
+            </TouchableOpacity>
 
-      {/* Audio Interface UI */}
-      <ThemedView style={styles.audioContainer}>
-        <Text style={styles.statusText}>Status: {statusText}</Text>
+            { status == Status.inactive ?
+                <></>
+                  :
+                <TouchableOpacity className="py-3 px-4 bg-blue-500 rounded-lg w-40 items-center">
+                  <Text
+                    onPress={() =>
+                      // @ts-ignore
+                      navigation.navigate('recordings', {
+                        recordingSession: recordingSession,
+                      })
+                    }
+                  >
+                    Recordings
+                  </Text>
+                </TouchableOpacity>
+            }
 
-        <TouchableOpacity style={buttonStyle} onPress={handleButtonUpdate}>
-          <Text style={styles.buttonText}>{buttonText}</Text>
+          </ThemedView>
+        </ParallaxScrollView>
+
+        {/* Sticky Bottom Button */}
+        <TouchableOpacity
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 items-center"
+          onPress={handleButtonUpdate}
+        >
+          <View className={'w-36 h-36 rounded-full items-center justify-center shadow-md ' + buttonStyle}>
+            <Entypo name="mic" size={48} color="black" />
+          </View>
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button} onPress={() => loadSession(0)}>
-                  <Text style={styles.buttonText}>Load session 0</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText} onPress={
-            // @ts-ignore
-            () => navigation.navigate("recordings", {
-                    recordingSession: recordingSession,
-                })}>Recordings</Text>
-        </TouchableOpacity>
-
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
   );
 }
 
@@ -207,6 +235,7 @@ const styles = StyleSheet.create({
     contentFit: 'cover',
   },
   audioContainer: {
+    flex: 1,
     marginTop: 30,
     alignItems: 'center',
     gap: 10,

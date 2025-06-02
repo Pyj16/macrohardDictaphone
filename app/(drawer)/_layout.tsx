@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 
 export default function DrawerLayout() {
   const colorScheme = useColorScheme();
-  const route: RouteProp<{params: {recordingSession}}> = useRoute();
+  const route: RouteProp<{params: {sessionId}}> = useRoute();
 
   return (
     <Drawer
