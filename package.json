@@ -16,7 +16,12 @@
     "security:audit-report": "npm audit --json > security-audit-report.json",
     "security:check-licenses": "npx license-checker --summary",
     "security:outdated": "npm outdated",
-    "security:full-check": "npm run security:audit && npm run security:outdated && npm run security:check-licenses"
+    "security:full-check": "npm run security:audit && npm run security:outdated && npm run security:check-licenses",
+    "sonar:full-analysis": "sonar-scanner -Dsonar.analysis.mode=publish",
+    "sonar:debt-report": "sonar-scanner -Dsonar.analysis.mode=issues",
+    "sonar:quality-gate": "node scripts/check-quality-gate.js",
+    "sonar:duplication-check": "sonar-scanner -Dsonar.cpd.cross_project=true",
+    "sonar:mobile-analysis": "sonar-scanner -Dsonar.profile=mobile-development"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
