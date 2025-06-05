@@ -26,19 +26,19 @@ import {
 import {RouteProp, useRoute} from "@react-navigation/core";
 import {setParams} from "expo-router/build/global-state/routing";
 
-const testSession1 = {
-    sessionId: '0',
-    patientId: '1',
-    title: 'AnaTitle',
-    recordings: []
-    }
-
-const testSession2 = {
-    sessionId: '1337',
-    patientId: '2',
-    title: 'TitleAna',
-    recordings: []
-    }
+// const testSession1 = {
+//     sessionId: '0',
+//     patientId: '1',
+//     title: 'AnaTitle',
+//     recordings: []
+//     }
+//
+// const testSession2 = {
+//     sessionId: '1337',
+//     patientId: '2',
+//     title: 'TitleAna',
+//     recordings: []
+//     }
 //
 // const StyledView = styled(View);
 // const StyledTouchableOpacity = styled(TouchableOpacity);
@@ -46,7 +46,7 @@ const testSession2 = {
 export default function HomeScreen() {
   const navigation = useNavigation();
   const route: RouteProp<{params: {sessionId: number}}> = useRoute();
-  const [recordingSession, setRecordingSession] = React.useState(testSession2);
+  const [recordingSession, setRecordingSession] = React.useState(undefined);
 
   // Button logic
   enum Status {
@@ -57,7 +57,7 @@ export default function HomeScreen() {
   }
 
   const [status, setStatus] = React.useState(Status.inactive);
-  const [buttonStyle, setButtonStyle] = React.useState("bg-green-500");
+  const [buttonStyle, setButtonStyle] = React.useState("bg-gray-500");
   // Button logic
 
   // Session status
@@ -74,6 +74,7 @@ export default function HomeScreen() {
     await audioRecorder.prepareToRecordAsync();
     audioRecorder.record();
     setIsRecording(true);
+
   };
 
   const stopRecording = async () => {
@@ -114,13 +115,16 @@ export default function HomeScreen() {
   }, [route])
 
   async function saveSession(){
+      if(!recordingSession)
+        return
+
       let sessionName = 'session-' + recordingSession.sessionId
               let sessionPath = FileSystem.documentDirectory + 'sessions/' + sessionName
               FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'sessions/', {intermediates: true})
               const data = JSON.stringify(recordingSession)
               console.log("new session data for", sessionName, ":", data)
               await FileSystem.writeAsStringAsync(sessionPath, data)
-      }
+  }
   React.useEffect(() => {
     (async () => {
       const stat = await AudioModule.requestRecordingPermissionsAsync();
@@ -134,6 +138,8 @@ export default function HomeScreen() {
        let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'sessions');
        console.log(files);
        let sessionPath = ''
+       if(files.length === 0)
+            return
        files.map(async (f) => {
            filePath = FileSystem.documentDirectory + 'sessions/' + f
            const checkSesh = 'session-' + i
@@ -146,7 +152,14 @@ export default function HomeScreen() {
             let objectData = JSON.parse(data)
             setRecordingSession(objectData)
             setStatus(Status.idle)
-            setSessionText("Session: " + objectData.title)
+            let patientName = "placeholder"
+            let date = new Date(objectData.creationTime)
+            let infoText = "Session: " + objectData.title
+                           + "\nPatient: " + patientName
+                           + "\n" + date.toLocaleString("en-GB")
+
+            setSessionText(infoText)
+            setButtonStyle("bg-green-500")
            }
        ).catch((e) => console.log(e))
   }
@@ -175,46 +188,59 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1">
-        <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}>
-          {/* Audio Interface UI */}
-          <ThemedView className="flex-1 items-center space-y-4 pb-40">
-            <Text>{sessionText}</Text>
-            <TouchableOpacity className="py-3 px-4 bg-blue-500 rounded-lg w-40 items-center"
-                onPress={() => navigation.navigate('sessions') }
-            >
-              <Text>Sessions</Text>
+      <Text className="text-xl mb-4">{sessionText}</Text>
+        {
+            status === Status.inactive ?
+            <></>
+            :
+            <TouchableOpacity className="mr-1 w-10 h-10 rounded-md items-center justify-center bg-gray-300"
+                onPress={() =>
+                navigation.navigate('edit-session', {
+                  sessionId: recordingSession.sessionId,
+                })
+              }>
+                <Entypo name="pencil" size={24} color="black" />
             </TouchableOpacity>
+        }
 
-            { status == Status.inactive ?
-                <></>
-                  :
-                <TouchableOpacity className="py-3 px-4 bg-blue-500 rounded-lg w-40 items-center">
-                  <Text
-                    onPress={() =>
-                      // @ts-ignore
-                      navigation.navigate('recordings', {
-                        recordingSession: recordingSession,
-                      })
-                    }
-                  >
-                    Recordings
-                  </Text>
-                </TouchableOpacity>
-            }
+      <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}>
+        {/* Audio Interface UI */}
+        <ThemedView className="px-5 pt-4 text-center">
+          {/* Sessions button with blue bg and white text */}
+          <TouchableOpacity
+            className={`mb-3 p-4 bg-gray-200 rounded-lg ${status === Status.recording ? 'opacity-50' : ''}`}
+            disabled={status === Status.recording}
+            onPress={() => navigation.navigate('sessions')}
+          >
+            <Text className="text-center text-gray-800">Sessions</Text>
+          </TouchableOpacity>
 
-          </ThemedView>
-        </ParallaxScrollView>
+          {status !== Status.inactive && (
+            <TouchableOpacity
+              className={`mb-3 p-4 bg-gray-200 rounded-lg ${status === Status.recording ? 'opacity-50' : ''}`}
+              disabled={status === Status.recording}
+              onPress={() =>
+                navigation.navigate('recordings', {
+                  recordingSession: recordingSession,
+                })
+              }
+            >
+              <Text className="text-center text-gray-800">Recordings</Text>
+            </TouchableOpacity>
+          )}
+        </ThemedView>
+      </ParallaxScrollView>
 
-        {/* Sticky Bottom Button */}
-        <TouchableOpacity
-          className="absolute bottom-20 left-1/2 -translate-x-1/2 items-center"
-          onPress={handleButtonUpdate}
-        >
-          <View className={'w-36 h-36 rounded-full items-center justify-center shadow-md ' + buttonStyle}>
-            <Entypo name="mic" size={48} color="black" />
-          </View>
-        </TouchableOpacity>
-      </View>
+      {/* Sticky Bottom Button */}
+      <TouchableOpacity
+        className="absolute bottom-20 left-1/2 -translate-x-1/2 items-center"
+        onPress={handleButtonUpdate}
+      >
+        <View className={'w-36 h-36 rounded-full items-center justify-center shadow-md ' + buttonStyle}>
+          <Entypo name="mic" size={48} color="black" />
+        </View>
+      </TouchableOpacity>
+    </View>
   );
 }
 

@@ -12,6 +12,7 @@ import { useEffect, useState} from 'react';
 import { useAudioPlayer } from 'expo-audio';
 import {useNavigation} from '@react-navigation/native';
 import { Stack, usePathname, Redirect, Slot } from 'expo-router';
+import Entypo from '@expo/vector-icons/Entypo';
 
 import axios from 'axios';
 
@@ -26,7 +27,7 @@ export default function Sessions() {
 
   const [sessions, setSessions] = React.useState([])
   const route: RouteProp<{}> = useRoute();
-  const [newSessionId, setNewSessionId] = React.useState(0)
+  const [newSessionId, setNewSessionId] = React.useState(1)
 
   useEffect(() => {
       handleLoadSessions()
@@ -35,6 +36,8 @@ export default function Sessions() {
   async function handleLoadSessions (){
         console.log('loading sessions')
         let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'sessions');
+        if(files.length === 0)
+            return
         let loadedSessions = await Promise.all(
               files.map(async (f) => {
                 const filePath = FileSystem.documentDirectory + 'sessions/' + f;
@@ -53,36 +56,59 @@ export default function Sessions() {
           })
   }
 
+
+  async function editSession(i: number){
+
+
+  }
+
   return (
-    <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#FFFFFF' }}>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Debug Page</ThemedText>
-      </ThemedView>
+  <View className="flex-1 bg-white">
+    {/* Header */}
+    <ThemedView className="sticky top-6 z-10 bg-white border-b border-gray-300 px-5 py-4">
+      <ThemedText type="title" className="text-center">
+        Sessions
+      </ThemedText>
+    </ThemedView>
 
-      <ThemedView style={styles.audioContainer}>
+    <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#FFFFFF' }} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ThemedView className="px-5 pt-4">
         {
-          sessions.map((session, index) => {
-            return (
-                <>
-                  <TouchableOpacity style={styles.button} key={index}>
-                    <Text style={styles.buttonText} onPress={() =>
-                        navigation.navigate("(drawer)", {
-                                sessionId: session.sessionId,
-                              })
-                    }>Session #{session.sessionId}</Text>
-                    <Text style={styles.buttonText}>{session.title}</Text>
-                  </TouchableOpacity>
-                </>
-            )
-          })
+          sessions.length === 0 ?
+          <Text className="flex-1 text-center text-2xl text-gray-800 text-base">
+             No sessions
+           </Text>
+           :
+           <></>
         }
-
-
-        <TouchableOpacity style={[styles.button, styles.submitButton]}>
-          <Text style={styles.buttonText} onPress={handleNewSession}>New Session</Text>
-        </TouchableOpacity>
+        {sessions.map((session, index) => (
+          <TouchableOpacity
+            key={index}
+            className="flex-row mb-3 p-4 bg-gray-200 rounded-lg items-center"
+            onPress={() =>
+              navigation.navigate('(drawer)', {
+                sessionId: session.sessionId,
+              })
+            }
+          >
+            <View className="flex-1">
+                <Text className="text-gray-800">{session.title}</Text>
+              </View>
+          </TouchableOpacity>
+        ))}
       </ThemedView>
     </ParallaxScrollView>
+
+    {/* Sticky New Session button at bottom */}
+    <View className="absolute bottom-10 w-full px-5 py-4 bg-white ">
+      <TouchableOpacity
+        className="w-full p-4 bg-green-600 rounded-lg"
+        onPress={handleNewSession}
+      >
+        <Text className="text-white text-center font-semibold">New Session</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
   );
 }
 

@@ -13,6 +13,9 @@ import { useAudioPlayer } from 'expo-audio';
 import {useNavigation} from '@react-navigation/native';
 import { Stack, usePathname, Redirect, Slot } from 'expo-router';
 
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
+import AntDesign from '@expo/vector-icons/AntDesign';
+
 import axios from 'axios';
 
 import * as FileSystem from 'expo-file-system';
@@ -28,6 +31,8 @@ export default function Recordings() {
   const route: RouteProp<{params: {recordingSession}}> = useRoute();
   const [recordingSession, setRecordingSession] = React.useState(route.params.recordingSession)
   const [recordings, setRecordings]= React.useState(recordingSession.recordings);
+  const [playingAt, setPlayingAt] = React.useState(-1);
+  const [remainingTime, setRemainingTime] = React.useState(1);
 
   const player = useAudioPlayer();
 
@@ -37,8 +42,17 @@ export default function Recordings() {
         const audioPath = recordings.at(i)
         console.log("Playing: ", recordings.at(i))
         player.replace(audioPath);
+        setPlayingAt(i)
         player.play();
+        setRemainingTime(remainingTime * -1)
     }
+
+    function pauseRecordingAt(i: number){
+            console.log("Pausing: ", recordings.at(i))
+            player.pause();
+            player.remove();
+            setPlayingAt(-1)
+        }
 
     useEffect(() => {
         handleLocalRead()
@@ -73,6 +87,15 @@ export default function Recordings() {
   React.useEffect(() => {
       saveSession()
     }, [recordingSession]);
+
+   useEffect(() => {
+       if(player.playing){
+         setTimeout(() => setRemainingTime(remainingTime * -1), 1);
+       }
+       else{
+           setPlayingAt(-1)
+       }
+   }, [remainingTime]);
 
   async function deleteRecordingAt(i: number){
         await FileSystem.deleteAsync(recordings.at(i))
@@ -166,52 +189,88 @@ export default function Recordings() {
   };
 
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#FFFFFF', dark: '#FFFFFF' }}
-      headerImage={
-        <Image
-//           source={require('@/assets/images/react-logo.png')}
-          style={styles.background}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Debug Page</ThemedText>
-      </ThemedView>
+      <View className="flex-1 bg-white">
+         <ThemedView className="sticky top-6 z-10 bg-white border-b border-gray-300 px-5 py-4">
+            <ThemedText type="title" className="text-center">
+              Recordings
+            </ThemedText>
+          </ThemedView>
+         <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#FFFFFF' }}>
 
-      <ThemedView style={styles.audioContainer}>
-        <Text style={styles.statusText}>Status: {statusText}</Text>
+           <ThemedView className="py-4 space-y-4">
+             {/*<Text className="text-gray-700 text-base">Status: {statusText}</Text>*/}
+             {
+                recordings.length === 0 ?
+                <Text className="flex-1 text-center text-2xl text-gray-800 text-base">
+                   No recordings
+                 </Text>
+                 :
+                 <></>
+             }
 
+             {recordings.map((recording, index) => (
+               <View
+                 key={index}
+                 className="flex-row items-center justify-between bg-gray-200 rounded-md p-4 mb-3"
+               >
+                 {/*Title*/}
+                 <Text className="flex-1 text-gray-800 text-base">
+                   Recording #{index + 1}
+                 </Text>
 
-        {
-          recordings.map((recording, index) => {
-            return (
-                <>
-                  <TouchableOpacity style={styles.button}>
-                    <Text style={styles.buttonText} onPress={() =>
-                        playRecordingAt(index)
-                    }>Play #{index}</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.button}>
-                    <Text style={styles.stopButton} onPress={() =>
-                        deleteRecordingAt(index)
-                    }>Delete</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.button}>
-                    <Text disabled={(index == 0)} style={styles.stopButton} onPress={() =>
-                        rearrangeRecordings(index, index - 1)
-                    }>↑</Text>
-                  </TouchableOpacity>
-                </>
-            )
-          })
-        }
+                 {/*Buttons*/}
+                 <View className="flex-row space-x-2">
+                    <TouchableOpacity>
+                      <View className="mr-2 w-10 h-10 flex items-center justify-center">
+                        {
+                           playingAt === index ?
+                           <AntDesign onPress={() => pauseRecordingAt(index)} name="pausecircleo" size={24} color="black" />
+                            :
+                           <AntDesign onPress={() => playRecordingAt(index)} name="play" size={24} color="black" />
+                        }
+                      </View>
+                    </TouchableOpacity>
 
+                   {/*Up button*/}
+                   <TouchableOpacity
+                     disabled={index === 0}
+                     onPress={() => index > 0 && rearrangeRecordings(index, index - 1)}
+                   >
+                     <View className={`mr-1 w-10 h-10 rounded-md flex items-center justify-center bg-gray-300 ${index === 0 ? 'opacity-50' : ''}`}>
+                       <AntDesign name="caretup" size={20} color="black" />
+                     </View>
+                   </TouchableOpacity>
 
-        <TouchableOpacity style={[styles.button, styles.submitButton]}>
-          <Text style={styles.buttonText} onPress={handleUpload}>Submit</Text>
-        </TouchableOpacity>
-      </ThemedView>
-    </ParallaxScrollView>
+                   {/*Down button*/}
+                   <TouchableOpacity
+                     disabled={index === recordings.length - 1}
+                     onPress={() => rearrangeRecordings(index, index + 1)}
+                   >
+                     <View className={`mr-2 w-10 h-10 rounded-md flex items-center justify-center bg-gray-300 ${index === recordings.length - 1 ? 'opacity-50' : ''}`}>
+                       <AntDesign name="caretdown" size={20} color="black" />
+                     </View>
+                   </TouchableOpacity>
+                   {/* Delete button*/}
+                   <TouchableOpacity onPress={() => deleteRecordingAt(index)}>
+                     <View className="w-10 h-10 bg-red-500 rounded-md flex items-center justify-center">
+                       <FontAwesome5 name="trash" size={20} color="white" />
+                     </View>
+                   </TouchableOpacity>
+                 </View>
+               </View>
+             ))}
+
+           </ThemedView>
+         </ParallaxScrollView>
+
+         <TouchableOpacity
+          style={{ width: '75%', alignSelf: 'center' }}
+          className="bottom-10  bg-green-600 rounded-md p-4 mb-3"
+           onPress={handleUpload}
+         >
+           <Text className="text-white text-center font-semibold">Submit</Text>
+         </TouchableOpacity>
+       </View>
   );
 }
 
