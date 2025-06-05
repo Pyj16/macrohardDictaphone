@@ -26,18 +26,11 @@ import { sha256, sha256Bytes } from 'react-native-sha256';
 export default function Personel() {
   const navigation = useNavigation();
 
-  const route: RouteProp<{params: {transcriptions: string[], debug: boolean}}> = useRoute();
-
-  const originalTransactions = route.params.transcriptions;
-  const [transcriptions, setTranscriptions] = React.useState(route.params.transcriptions);
+  const [transcriptions, setTranscriptions] = React.useState([]);
   const [anamnesisList, setAnamnesisList] = React.useState([]);
   const approvedTranscriptions = [];
   const rejectedTranscriptions = [];
 
-  // Essentially gets called whenever redirect is sent to this page.
-  useEffect(() => {
-    setTranscriptions(route.params.transcriptions);
-  }, [route.params.transcriptions]);
 
 
   async function updateAnamnesis() {

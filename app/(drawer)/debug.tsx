@@ -12,13 +12,12 @@ import {Audio} from "expo-av";
 import {GoogleSigninButton} from "@react-native-google-signin/google-signin";
 import {signIn} from "@/app/services/authContext";
 
-
-
-const tempTransc = [
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-  "Pellentesque sed risus luctus, lobortis ante rhoncus, porta purus.",
-  "Aliquam elit eros, viverra sed tempor vitae, rhoncus tempor turpis."
-]
+import RNRsa from 'react-native-rsa-native';
+import AesGcmCrypto from 'react-native-aes-gcm-crypto';
+import { Buffer } from 'buffer';
+import { useEffect } from 'react';
+import 'react-native-get-random-values';
+import { public_key } from '@/app/key.ts'
 
 export default function Debug() {
   const navigation = useNavigation();
@@ -27,6 +26,24 @@ export default function Debug() {
   const [recordings, setRecordings] = React.useState([]);
 
   const [statusText, setStatusText] = React.useState<string>("Idle");
+
+  useEffect(() => {
+      (async () => {
+//         const RSAencrypted = await RNRsa.encrypt('hello RSA', public_key);
+//         console.log("RSA: ",RSAencrypted)
+//
+//         const array = new Uint8Array(32);
+//         console.log("array: ", array)
+//         crypto.getRandomValues(array);
+//         console.log("array: ", array)
+//         const aesKeyBase64 = Buffer.from(array).toString('base64');
+//         console.log("aesKeyBase64: ", aesKeyBase64)
+//         let AESEncrypted = await encryptAesGcm('hello AES', aesKeyBase64);
+//         console.log("AES: ", AESEncrypted)
+
+      })();
+    }, []);
+
 
   async function startRecording(){
 
@@ -99,6 +116,9 @@ export default function Debug() {
     setRecordings([]);
   }
 
+  function sendEncrypted(){
+      }
+
   return (
       <ParallaxScrollView
           headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}
@@ -135,16 +155,14 @@ export default function Debug() {
           <TouchableOpacity style={styles.button}>
             <Text style={styles.buttonText} onPress={
               // @ts-ignore
-              () => navigation.navigate("personel", {
-                transcriptions: tempTransc
-              })}>Personel Page</Text>
+              () => navigation.navigate("personel")}>Personel Page</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.button} onPress={playLastRecording}>
             <Text style={styles.buttonText}>Play Last</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.button, styles.submitButton]}>
+          <TouchableOpacity style={[styles.button, styles.submitButton]} onPress={sendEncrypted}>
             <Text style={styles.buttonText}>Submit</Text>
           </TouchableOpacity>
         </ThemedView>
