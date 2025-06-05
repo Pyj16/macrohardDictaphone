@@ -21,56 +21,66 @@ import React from "react";
 
 
 
-export default function CreateSession() {
+export default function EditSession() {
   const navigation = useNavigation();
 
   const [title, setTitle] = React.useState("")
   const [patientId, setPatientId] = React.useState("")
   const route: RouteProp<{params: {sessionId: number}}> = useRoute();
+  const [session, setSession] = React.useState({})
 
 
   useEffect(() => {
-      handleLoadSessions()
+      loadSession(route.params.sessionId)
       }, [])
 
-  async function handleLoadSessions (){
-        console.log('loading sessions')
-        let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'sessions');
-        let loadedSessions = await Promise.all(
-              files.map(async (f) => {
-                const filePath = FileSystem.documentDirectory + 'sessions/' + f;
-                const data = await FileSystem.readAsStringAsync(filePath);
-                return JSON.parse(data);
-              })
-            );
+  async function loadSession(i: number){
+         let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'sessions');
+         console.log(files);
+         let sessionPath = ''
+         if(files.length === 0)
+              return
+         files.map(async (f) => {
+             filePath = FileSystem.documentDirectory + 'sessions/' + f
+             const checkSesh = 'session-' + i
+             console.log('comparing', checkSesh, "with", f)
+             if(checkSesh === f)
+               sessionPath = filePath
+             })
+         FileSystem.readAsStringAsync(sessionPath).then((data) => {
+              console.log(data)
+              let objectData = JSON.parse(data)
+              setSession(objectData);
+              setPatientId(objectData.patientId)
+              setTitle(objectData.title);
+             }
+         ).catch((e) => console.log(e))
+    }
 
-            setSessions(loadedSessions);
-  }
 
-
-    async function handleCreate(){
-        const emptySession = {
-            sessionId: route.params.sessionId,
-            patientId: patientId,
+    async function handleSave(){
+        const editedSession = {
+            sessionId: session.sessionId,
+            patientId: session.patientId,
             title: title,
-            creationTime: Date.now(),
-            recordings: []
+            creationTime: session.creationTime,
+            recordings: session.recordings
         }
 
-      let sessionName = 'session-' + emptySession.sessionId
-      let sessionPath = FileSystem.documentDirectory + 'sessions/' + sessionName
-      FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'sessions/', {intermediates: true})
-      const data = JSON.stringify(emptySession)
-      console.log("new session data for", sessionName, ":", data)
-      await FileSystem.writeAsStringAsync(sessionPath, data)
-      navigation.navigate("(drawer)", {sessionId: route.params.sessionId,})
+      let sessionName = 'session-' + session.sessionId
+        let sessionPath = FileSystem.documentDirectory + 'sessions/' + sessionName
+        FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'sessions/', {intermediates: true})
+        const data = JSON.stringify(editedSession)
+        console.log("new session data for", sessionName, ":", data)
+        await FileSystem.writeAsStringAsync(sessionPath, data)
+        navigation.navigate('(drawer)', {sessionId: session.sessionId})
     }
 
   return (
     <View className="flex-1 bg-white">
         <ThemedView className="sticky top-6 z-10 bg-white border-b border-gray-300 px-5 py-4">
           <ThemedText type="title" className="text-2xl font-bold text-center">
-            New Session
+            Editing Session
           </ThemedText>
         </ThemedView>
 
@@ -84,20 +94,19 @@ export default function CreateSession() {
           value={title}
           placeholder="Title"
         />
-        <TextInput
+        <Text
           className="border border-gray-300 rounded-md px-4 py-2 m-4"
-          onChangeText={setPatientId}
-          value={patientId}
-          placeholder="Patient ID"
-        />
+        >
+        {session.patientId}
+        </Text>
 
         {/* Submit button */}
         <TouchableOpacity
           className="bg-blue-600 rounded-md py-3 mx-4 mt-6"
-          onPress={handleCreate}
+          onPress={handleSave}
         >
           <Text className="text-white text-center font-semibold">
-            Create New Session
+            Save
           </Text>
         </TouchableOpacity>
       </ParallaxScrollView>
