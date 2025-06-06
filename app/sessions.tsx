@@ -1,165 +1,189 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, Text, TouchableOpacity, View, BackHandler } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import {Recording} from "expo-av/build/Audio/Recording";
-import {RouteProp, useRoute} from "@react-navigation/core";
-import {setParams} from "expo-router/build/global-state/routing";
-import { useEffect, useState} from 'react';
-import { useAudioPlayer } from 'expo-audio';
-import {useNavigation} from '@react-navigation/native';
-import { Stack, usePathname, Redirect, Slot } from 'expo-router';
-import Entypo from '@expo/vector-icons/Entypo';
-
-import axios from 'axios';
-
-import * as FileSystem from 'expo-file-system';
-import { StorageAccessFramework } from 'expo-file-system';
 import React from "react";
-
-
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  BackHandler,
+} from "react-native";
+import { useRouter } from "expo-router";
+import * as FileSystem from "expo-file-system";
 
 export default function Sessions() {
-  const navigation = useNavigation();
+  const router = useRouter();
 
-  const [sessions, setSessions] = React.useState([])
-  const route: RouteProp<{}> = useRoute();
-  const [newSessionId, setNewSessionId] = React.useState(1)
+  const [sessions, setSessions] = React.useState<
+    { sessionId: number; title: string }[]
+  >([]);
+  const [newSessionId, setNewSessionId] = React.useState(1);
 
-  useEffect(() => {
-      handleLoadSessions()
-      }, [])
+  React.useEffect(() => {
+    handleLoadSessions();
+  }, []);
 
-  async function handleLoadSessions (){
-        console.log('loading sessions')
-        let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'sessions');
-        if(files.length === 0)
-            return
-        let loadedSessions = await Promise.all(
-              files.map(async (f) => {
-                const filePath = FileSystem.documentDirectory + 'sessions/' + f;
-                const data = await FileSystem.readAsStringAsync(filePath);
-                return JSON.parse(data);
-              })
-            );
+  React.useEffect(() => {
+    const backAction = () => {
+      handleLoadSessions();
+      return false;
+    };
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+    return () => backHandler.remove();
+  }, []);
 
-            setSessions(loadedSessions);
-            setNewSessionId(parseInt(loadedSessions.at(-1).sessionId) + 1)
+  async function handleLoadSessions() {
+    try {
+      const folderUri = FileSystem.documentDirectory + "sessions";
+      const files = await FileSystem.readDirectoryAsync(folderUri);
+
+      if (files.length === 0) {
+        setSessions([]);
+        setNewSessionId(1);
+        return;
+      }
+
+      const loadedSessions = await Promise.all(
+        files.map(async (filename) => {
+          const filePath = folderUri + "/" + filename;
+          const data = await FileSystem.readAsStringAsync(filePath);
+          const obj = JSON.parse(data) as {
+            sessionId: number;
+            title: string;
+          };
+          return { sessionId: obj.sessionId, title: obj.title };
+        })
+      );
+
+      loadedSessions.sort((a, b) => a.sessionId - b.sessionId);
+
+      setSessions(loadedSessions);
+      setNewSessionId(loadedSessions[loadedSessions.length - 1].sessionId + 1);
+    } catch (e) {
+      console.error("Error loading sessions:", e);
+      setSessions([]);
+      setNewSessionId(1);
+    }
   }
 
-  function handleNewSession(){
-    navigation.navigate("create-session", {
-            sessionId: newSessionId,
-          })
+  function handleNewSession() {
+    router.push({ pathname: "/create-session", params: { sessionId: newSessionId } });
   }
 
-
-  async function editSession(i: number){
-
-
+  function handleOpenSession(sessionId: number) {
+    router.push({
+      pathname: "/(drawer)",
+      params: { sessionId },
+    });
   }
 
   return (
-  <View className="flex-1 bg-white">
-    {/* Header */}
-    <ThemedView className="sticky top-6 z-10 bg-white border-b border-gray-300 px-5 py-4">
-      <ThemedText type="title" className="text-center">
-        Sessions
-      </ThemedText>
-    </ThemedView>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Sessions</Text>
+      </View>
 
-    <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#FFFFFF' }} contentContainerStyle={{ paddingBottom: 100 }}>
-      <ThemedView className="px-5 pt-4">
-        {
-          sessions.length === 0 ?
-          <Text className="flex-1 text-center text-2xl text-gray-800 text-base">
-             No sessions
-           </Text>
-           :
-           <></>
-        }
-        {sessions.map((session, index) => (
-          <TouchableOpacity
-            key={index}
-            className="flex-row mb-3 p-4 bg-gray-200 rounded-lg items-center"
-            onPress={() =>
-              navigation.navigate('(drawer)', {
-                sessionId: session.sessionId,
-              })
-            }
-          >
-            <View className="flex-1">
-                <Text className="text-gray-800">{session.title}</Text>
-              </View>
-          </TouchableOpacity>
-        ))}
-      </ThemedView>
-    </ParallaxScrollView>
+      <View style={styles.listContainer}>
+        {sessions.length === 0 ? (
+          <Text style={styles.noSessionsText}>No sessions</Text>
+        ) : (
+          sessions.map((session) => (
+            <TouchableOpacity
+              key={session.sessionId}
+              style={styles.sessionRow}
+              onPress={() => handleOpenSession(session.sessionId)}
+            >
+              <Text style={styles.sessionTitle}>{session.title}</Text>
+            </TouchableOpacity>
+          ))
+        )}
+      </View>
 
-    {/* Sticky New Session button at bottom */}
-    <View className="absolute bottom-10 w-full px-5 py-4 bg-white ">
-      <TouchableOpacity
-        className="w-full p-4 bg-green-600 rounded-lg"
-        onPress={handleNewSession}
-      >
-        <Text className="text-white text-center font-semibold">New Session</Text>
-      </TouchableOpacity>
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.newButton}
+          onPress={handleNewSession}
+        >
+          <Text style={styles.newButtonText}>New Session</Text>
+        </TouchableOpacity>
+      </View>
     </View>
-  </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#ECEFF1",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  container: {
+    flex: 1,
+    paddingTop: 24,
   },
-  background: {
-    width: '100%',
-    height: '100%',
-    contentFit: 'cover',
+  header: {
+    marginBottom: 16,
+    alignItems: "center",
   },
-  audioContainer: {
-    marginTop: 30,
-    alignItems: 'center',
-    gap: 10,
+  headerText: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#37474F",
   },
-  statusText: {
+  card: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  noSessionsText: {
+    textAlign: "center",
+    color: "#607D8B",
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
+    marginTop: 40,
   },
-  button: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: '#4a90e2',
+  sessionRow: {
+    backgroundColor: "#F5F5F5",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
     borderRadius: 8,
-    width: 160,
-    alignItems: 'center',
+    marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  submitButton: {
-    backgroundColor: '#34c759',
+  sessionTitle: {
+    fontSize: 18,
+    color: "#37474F",
+    fontWeight: "500",
   },
-  stopButton: {
-      paddingVertical: 12,
-      paddingHorizontal: 20,
-      borderRadius: 8,
-      width: 160,
-      alignItems: 'center',
-      backgroundColor: '#ff0000',
+  footer: {
+    paddingVertical: 16,
+    alignItems: "center",
   },
-  buttonText: {
-    color: '#fff',
+  newButton: {
+    backgroundColor: "#34C759",
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  newButtonText: {
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "600",
   },
 });
