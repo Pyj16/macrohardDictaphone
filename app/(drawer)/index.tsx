@@ -18,6 +18,8 @@ import {useNavigation} from '@react-navigation/native';
 import { signIn} from '../services/authService.ts';
 import * as FileSystem from 'expo-file-system';
 
+import { AuthProvider, useAuth } from '../services/authContext';
+
 import {
   GoogleSignin,
   GoogleSigninButton,
@@ -47,6 +49,9 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const route: RouteProp<{params: {sessionId: number}}> = useRoute();
   const [recordingSession, setRecordingSession] = React.useState(undefined);
+  const [detailsText, setDetailsText] = React.useState('');
+
+  const { userInfo, jwt } = useAuth();
 
   // Button logic
   enum Status {
@@ -125,6 +130,18 @@ export default function HomeScreen() {
               console.log("new session data for", sessionName, ":", data)
               await FileSystem.writeAsStringAsync(sessionPath, data)
   }
+
+  async function deleteSession(){
+      if(!recordingSession)
+        return
+
+      let sessionName = 'session-' + recordingSession.sessionId
+              let sessionPath = FileSystem.documentDirectory + 'sessions/' + sessionName
+              FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'sessions/', {intermediates: true})
+              const data = JSON.stringify(recordingSession)
+              console.log("new session data for", sessionName, ":", data)
+              await FileSystem.writeAsStringAsync(sessionPath, data)
+  }
   React.useEffect(() => {
     (async () => {
       const stat = await AudioModule.requestRecordingPermissionsAsync();
@@ -152,13 +169,14 @@ export default function HomeScreen() {
             let objectData = JSON.parse(data)
             setRecordingSession(objectData)
             setStatus(Status.idle)
-            let patientName = "placeholder"
+            let patientName = objectData.patientName + " " + objectData.patientSurname
             let date = new Date(objectData.creationTime)
-            let infoText = "Session: " + objectData.title
-                           + "\nPatient: " + patientName
-                           + "\n" + date.toLocaleString("en-GB")
+            let infoText = objectData.title
+            let detailsText = "Patient: " + patientName
+                              + "\n" + date.toLocaleString("en-GB")
 
             setSessionText(infoText)
+            setDetailsText(detailsText)
             setButtonStyle("bg-green-500")
            }
        ).catch((e) => console.log(e))
@@ -188,21 +206,28 @@ export default function HomeScreen() {
 
   return (
     <View className="flex-1">
-      <Text className="text-xl mb-4">{sessionText}</Text>
-        {
-            status === Status.inactive ?
-            <></>
-            :
-            <TouchableOpacity className="mr-1 w-10 h-10 rounded-md items-center justify-center bg-gray-300"
-                onPress={() =>
-                navigation.navigate('edit-session', {
-                  sessionId: recordingSession.sessionId,
-                })
-              }>
-                <Entypo name="pencil" size={24} color="black" />
-            </TouchableOpacity>
-        }
+      {/*Session data*/}
+      <View>
+          <Text className="text-center text-2xl mb-4">{sessionText}</Text>
+          <View className="flex-row items-center justify-between px-2 mb-4">
+            <Text className="text-l text-gray-800">{detailsText}</Text>
 
+            {status !== Status.inactive && (
+              <TouchableOpacity
+                className="mr-4 w-10 h-10 rounded-md items-center justify-center bg-gray-300"
+                onPress={() =>
+                  navigation.navigate('edit-session', {
+                    sessionId: recordingSession.sessionId,
+                  })
+                }
+              >
+                <Entypo name="pencil" size={24} color="black" />
+              </TouchableOpacity>
+            )}
+          </View>
+
+
+      </View>
       <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#000000' }}>
         {/* Audio Interface UI */}
         <ThemedView className="px-5 pt-4 text-center">

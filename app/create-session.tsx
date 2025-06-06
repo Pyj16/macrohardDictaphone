@@ -19,7 +19,26 @@ import * as FileSystem from 'expo-file-system';
 import { StorageAccessFramework } from 'expo-file-system';
 import React from "react";
 
+import { Picker } from '@react-native-picker/picker';
+import { AuthProvider, useAuth } from './services/authContext';
 
+const dummyPatients=[
+    {
+        id: 1,
+        name: 'John',
+        surname: 'Doe'
+    },
+    {
+        id: 2,
+        name: 'Jane',
+        surname: 'Doe'
+    },
+    {
+        id: 3,
+        name: 'Jeb',
+        surname: 'Doe'
+    },
+]
 
 export default function CreateSession() {
   const navigation = useNavigation();
@@ -27,11 +46,20 @@ export default function CreateSession() {
   const [title, setTitle] = React.useState("")
   const [patientId, setPatientId] = React.useState("")
   const route: RouteProp<{params: {sessionId: number}}> = useRoute();
+  const [selectedPatient, setSelectedPatient] = React.useState({})
+  const [allPatients, setAllPatients] = React.useState([])
+
+  const { userInfo, jwt } = useAuth();
 
 
   useEffect(() => {
       handleLoadSessions()
+      getAllPatients()
       }, [])
+
+  useEffect(() => {
+      console.log(selectedPatient)
+      }, [selectedPatient])
 
   async function handleLoadSessions (){
         console.log('loading sessions')
@@ -47,11 +75,26 @@ export default function CreateSession() {
             setSessions(loadedSessions);
   }
 
+  async function getAllPatients(){
+      console.log('fetching all patients')
+      const token = "Bearer " + jwt
+      fetch('http://192.168.1.177:5000/fetch-patients', {
+                    method: 'POST',
+                    headers: {Accept: '*', 'Content-Type': 'application/json', Authorization: token},
+                    body: JSON.stringify({"doctor_email": userInfo.email})
+                    }).then( async (res) => res.json()).then((data) => {
+                            console.log(data.patients)
+                            setAllPatients(data.patients)
+                            return;
+                            }).catch((err) => console.log(err));
+  }
 
     async function handleCreate(){
         const emptySession = {
             sessionId: route.params.sessionId,
-            patientId: patientId,
+            patientId: selectedPatient.patient_id,
+            patientName: selectedPatient.name,
+            patientSurname: selectedPatient.surname,
             title: title,
             creationTime: Date.now(),
             recordings: []
@@ -84,12 +127,21 @@ export default function CreateSession() {
           value={title}
           placeholder="Title"
         />
-        <TextInput
-          className="border border-gray-300 rounded-md px-4 py-2 m-4"
-          onChangeText={setPatientId}
-          value={patientId}
-          placeholder="Patient ID"
-        />
+        <View className="border text-gray border-gray-300 rounded-md m-4 px-2">
+            <Picker
+              selectedValue={selectedPatient}
+              onValueChange={(v)=>{setSelectedPatient(v)}}
+            >
+              <Picker.Item label="Select Patient" value="" />
+              {
+                  allPatients.map((p, index) => {
+                      return(
+                          <Picker.Item label={p.name + " " + p.surname} value={p}/>
+                      );
+                  })
+              }
+            </Picker>
+        </View>
 
         {/* Submit button */}
         <TouchableOpacity

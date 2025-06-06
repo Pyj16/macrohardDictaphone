@@ -62,6 +62,8 @@ export default function EditSession() {
         const editedSession = {
             sessionId: session.sessionId,
             patientId: session.patientId,
+            patientName: session.patientName,
+            patientSurname: session.patientSurname,
             title: title,
             creationTime: session.creationTime,
             recordings: session.recordings
@@ -74,6 +76,19 @@ export default function EditSession() {
         console.log("new session data for", sessionName, ":", data)
         await FileSystem.writeAsStringAsync(sessionPath, data)
         navigation.navigate('(drawer)', {sessionId: session.sessionId})
+    }
+
+    async function handleDelete(){
+      for(let r of session.recordings){
+          console.log('deleting: ', r)
+          await FileSystem.deleteAsync(r)
+      }
+
+      let sessionName = 'session-' + session.sessionId
+      let sessionPath = FileSystem.documentDirectory + 'sessions/' + sessionName
+      console.log('deleting: ', sessionPath)
+      await FileSystem.deleteAsync(sessionPath)
+      navigation.navigate('(drawer)', {sessionId: session.sessionId})
     }
 
   return (
@@ -97,16 +112,26 @@ export default function EditSession() {
         <Text
           className="border border-gray-300 rounded-md px-4 py-2 m-4"
         >
-        {session.patientId}
+        {session.patientName + " " + session.patientSurname}
         </Text>
 
-        {/* Submit button */}
+        {/* Save button */}
         <TouchableOpacity
           className="bg-blue-600 rounded-md py-3 mx-4 mt-6"
           onPress={handleSave}
         >
           <Text className="text-white text-center font-semibold">
             Save
+          </Text>
+        </TouchableOpacity>
+
+        {/* Delete button */}
+        <TouchableOpacity
+          className="bg-red-600 rounded-md py-3 mx-4 mt-6"
+          onPress={handleDelete}
+        >
+          <Text className="text-white text-center font-semibold">
+            Delete
           </Text>
         </TouchableOpacity>
       </ParallaxScrollView>
