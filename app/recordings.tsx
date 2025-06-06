@@ -24,6 +24,8 @@ import React from "react";
 
 import { sha256, sha256Bytes } from 'react-native-sha256';
 
+import { AuthProvider, useAuth } from './services/authContext';
+
 export default function Recordings() {
   const navigation = useNavigation();
 
@@ -35,6 +37,7 @@ export default function Recordings() {
   const [remainingTime, setRemainingTime] = React.useState(1);
 
   const player = useAudioPlayer();
+  const { userInfo, jwt } = useAuth();
 
   const recordingsDir = FileSystem.documentDirectory + 'recordings/'
 
@@ -168,19 +171,10 @@ export default function Recordings() {
 
 
     console.log('attempting send')
-//     const {data} = await axios.post('http://192.168.1.177:5000/test-multiple-recordings', {
-//         id_: hashedId,
-//         title: recordingSession.title,
-//         audio_files: form
-//       }, {
-//         headers: {
-//           'Content-Type': 'multipart/form-data'
-//         }
-//       }
-//     )
+    const token = "Bearer " + jwt
     fetch('http://192.168.1.177:5000/test-multiple-recordings', {
               method: 'POST',
-              headers: {Accept: '*'},
+              headers: {Accept: '*', Authorization: token},
               body: form,
               }).then( async (res) => res.json()).then((data)=>{
                       console.log(data)

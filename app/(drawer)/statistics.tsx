@@ -12,7 +12,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 
-const SERVER_URL = 'http://192.168.64.30:5000';
+const SERVER_URL = 'http://192.168.1.177:5000';
 
 export default function Statistics() {
   const [doctorStats, setDoctorStats] = useState([]);
