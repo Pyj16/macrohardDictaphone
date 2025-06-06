@@ -100,9 +100,7 @@ export default function EditSession() {
         </ThemedView>
 
       <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#FFFFFF' }}>
-        {/* Title Container */}
 
-        {/* Input fields */}
         <TextInput
           className="border border-gray-300 rounded-md px-4 py-2 m-4"
           onChangeText={setTitle}
@@ -125,7 +123,6 @@ export default function EditSession() {
           </Text>
         </TouchableOpacity>
 
-        {/* Delete button */}
         <TouchableOpacity
           className="bg-red-600 rounded-md py-3 mx-4 mt-6"
           onPress={handleDelete}

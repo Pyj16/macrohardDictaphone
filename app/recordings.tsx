@@ -1,321 +1,322 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, Text, TouchableOpacity, View, BackHandler } from 'react-native';
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  BackHandler,
+} from "react-native";
+import * as FileSystem from "expo-file-system";
+import { useAudioPlayer } from "expo-audio";
+import { sha256 } from "react-native-sha256";
+import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
+import { useAuth } from "./services/authContext"; // adjust path if needed
+import {Platform } from "react-native";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import {Recording} from "expo-av/build/Audio/Recording";
-import {RouteProp, useRoute} from "@react-navigation/core";
-import {setParams} from "expo-router/build/global-state/routing";
-import { useEffect, useState } from 'react';
-import { useAudioPlayer } from 'expo-audio';
-import {useNavigation} from '@react-navigation/native';
-import { Stack, usePathname, Redirect, Slot } from 'expo-router';
+type RecordingSession = {
+  sessionId: number;
+  patientId: number;
+  patientName: string;
+  patientSurname: string;
+  title: string;
+  creationTime: number;
+  recordings: string[];
+};
 
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import AntDesign from '@expo/vector-icons/AntDesign';
-
-import axios from 'axios';
-
-import * as FileSystem from 'expo-file-system';
-import { StorageAccessFramework } from 'expo-file-system';
-import React from "react";
-
-import { sha256, sha256Bytes } from 'react-native-sha256';
-
-import { AuthProvider, useAuth } from './services/authContext';
+type RootStackParamList = {
+  Recordings: { recordingSession: RecordingSession };
+  Index: undefined;
+};
 
 export default function Recordings() {
   const navigation = useNavigation();
-
-  const [statusText, setStatusText] = React.useState("Idle")
-  const route: RouteProp<{params: {recordingSession}}> = useRoute();
-  const [recordingSession, setRecordingSession] = React.useState(route.params.recordingSession)
-  const [recordings, setRecordings]= React.useState(recordingSession.recordings);
-  const [playingAt, setPlayingAt] = React.useState(-1);
-  const [remainingTime, setRemainingTime] = React.useState(1);
-
+  const route = useRoute<RouteProp<RootStackParamList, "Recordings">>();
+  const { jwt } = useAuth();
   const player = useAudioPlayer();
-  const { userInfo, jwt } = useAuth();
 
-  const recordingsDir = FileSystem.documentDirectory + 'recordings/'
+  const [recordingSession, setRecordingSession] = useState<RecordingSession>(
+    route.params.recordingSession
+  );
+  const [statusText, setStatusText] = useState("Idle");
+  const [playingAt, setPlayingAt] = useState(-1);
 
-    function playRecordingAt(i: number){
-        const audioPath = recordings.at(i)
-        console.log("Playing: ", recordings.at(i))
-        player.replace(audioPath);
-        setPlayingAt(i)
-        player.play();
-        setRemainingTime(remainingTime * -1)
-    }
-
-    function pauseRecordingAt(i: number){
-            console.log("Pausing: ", recordings.at(i))
-            player.pause();
-            player.remove();
-            setPlayingAt(-1)
-        }
-
-    useEffect(() => {
-        handleLocalRead()
-        }, [route])
-
-    useEffect(() => {
+  useEffect(() => {
     const backAction = () => {
-      console.log("Sending recordings session", recordingSession)
-      navigation.navigate("(drawer)", {
-        sessionId: recordingSession.sessionId,
-      })
+      navigation.popToTop();
       return true;
     };
 
     const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
+      "hardwareBackPress",
+      backAction
     );
-
     return () => backHandler.remove();
   }, []);
 
-  async function saveSession(){
-    let sessionName = 'session-' + recordingSession.sessionId
-    let sessionPath = FileSystem.documentDirectory + 'sessions/' + sessionName
-    FileSystem.makeDirectoryAsync(FileSystem.documentDirectory + 'sessions/', {intermediates: true})
-    const data = JSON.stringify(recordingSession)
-    console.log("new session data for", sessionName, ":", data)
-    await FileSystem.writeAsStringAsync(sessionPath, data)
-  }
-
-  React.useEffect(() => {
-      saveSession()
-    }, [recordingSession]);
-
-   useEffect(() => {
-       if(player.playing){
-         setTimeout(() => setRemainingTime(remainingTime * -1), 1);
-       }
-       else{
-           setPlayingAt(-1)
-       }
-   }, [remainingTime]);
-
-  async function deleteRecordingAt(i: number){
-        await FileSystem.deleteAsync(recordings.at(i))
-        handleLocalRead()
-  }
-
-  function rearrangeRecordings(i: number, j: number){
-    if (i == 0 || j > recordings.length - 1)
-      return;
-    let newRecordings = [...recordings];
-    let swapped = newRecordings[i];
-    newRecordings[i] = newRecordings[j];
-    newRecordings[j] = swapped;
-    // @ts-ignore
-    setRecordings(newRecordings)
-    setRecordingSession({
-        ...recordingSession,
-        recordings: newRecordings,
-        })
-  }
-
-    async function handleLocalRead (){
-
-      console.log('fetching files');
-      let files = await FileSystem.readDirectoryAsync(FileSystem.documentDirectory + 'recordings');
-      console.log('fetched files');
-      console.log(files);
-      recordingPaths = []
-      files.map((f) => {
-          filePath = FileSystem.documentDirectory + 'recordings/' + f
-          if(route.params.recordingSession.recordings.includes(filePath))
-            recordingPaths.push(filePath)
-          })
-      console.log(recordingPaths)
-      setRecordings(recordingPaths)
-      setRecordingSession({
-          ...recordingSession,
-          recordings: recordingPaths,
-          })
+  useEffect(() => {
+    async function saveSessionLocally() {
+      const sessionName = `session-${recordingSession.sessionId}`;
+      const sessionPath =
+        FileSystem.documentDirectory + "sessions/" + sessionName;
+      await FileSystem.makeDirectoryAsync(
+        FileSystem.documentDirectory + "sessions/",
+        { intermediates: true }
+      );
+      try {
+        await FileSystem.writeAsStringAsync(
+          sessionPath,
+          JSON.stringify(recordingSession)
+        );
+      } catch (e) {
+        console.error("Failed to save session locally:", e);
+      }
     }
 
-  const handleUpload = async () => {
-    console.log('starting handle')
-    let audioSegments = []
-    let form = new FormData()
-    let i = 1
-    for(let recording of recordingSession.recordings)
-    {
-        console.log('processing recording: ', recording)
-        const uri = await FileSystem.getContentUriAsync(recording)
-        console.log(uri)
-        setStatusText('content uri: ',uri)
-        form.append("audio_files", {
-            uri: uri,
-            name: 'audio' + i + '.m4a', // TO-DO: Use library to determine file type
-            type: 'audio/mpeg',
-          })
-        i++;
+    saveSessionLocally();
+  }, [recordingSession]);
+
+  async function ensureM4A(rawUri: string): Promise<string> {
+    if (rawUri.endsWith(".m4a")) {
+      return rawUri;
     }
+    const renamed = rawUri + ".m4a";
+    try {
+      await FileSystem.moveAsync({ from: rawUri, to: renamed });
+      setRecordingSession((prev) => ({
+        ...prev,
+        recordings: prev.recordings.map((u) => (u === rawUri ? renamed : u)),
+      }));
+      return renamed;
+    } catch (e) {
+      console.error("Failed to rename file to .m4a:", e);
+      throw e;
+    }
+  }
 
-    const hashedId = await sha256(recordingSession.patientId).then( hash => {
-        console.log("hash",hash);
-        return hash
-    })
-    console.log(hashedId)
-    form.append("id_", hashedId)
-    form.append("title", recordingSession.title)
+  function playRecordingAt(i: number) {
+    const uri = recordingSession.recordings[i];
+    player.replace(uri);
+    player.play();
+    setPlayingAt(i);
+    setStatusText(`Playing segment #${i + 1}`);
+  }
+  function pauseRecordingAt(i: number) {
+    player.pause();
+    player.remove();
+    setPlayingAt(-1);
+    setStatusText("Paused");
+  }
 
-    console.log(form)
+  async function deleteRecordingAt(i: number) {
+    const uri = recordingSession.recordings[i];
+    try {
+      await FileSystem.deleteAsync(uri);
+    } catch (e) {
+      console.error("Failed to delete file:", e);
+    }
+    setRecordingSession((prev) => ({
+      ...prev,
+      recordings: prev.recordings.filter((_, idx) => idx !== i),
+    }));
+  }
 
+ async function handleUpload() {
+   if (!recordingSession.recordings.length) {
+     setStatusText("No recordings found");
+     return;
+   }
 
-    console.log('attempting send')
-    const token = "Bearer " + jwt
-    fetch('http://192.168.1.177:5000/test-multiple-recordings', {
-              method: 'POST',
-              headers: {Accept: '*', Authorization: token},
-              body: form,
-              }).then( async (res) => res.json()).then((data)=>{
-                      console.log(data)
-                      return;
-                      }).catch((err) => console.log(err));
-  };
+   const form = new FormData();
+   setStatusText("Preparing files…");
+
+   try {
+     await Promise.all(
+       recordingSession.recordings.map(async (rawUri, i) => {
+         const fileUri = await ensureM4A(rawUri);
+         form.append("audio_files", {
+           uri: fileUri,
+           name: `segment-${i + 1}.m4a`,
+           type: "audio/m4a",
+         });
+       })
+     );
+   } catch {
+     setStatusText("Rename failed");
+     return;
+   }
+
+   const hashedId = await sha256(recordingSession.patientId.toString());
+   form.append("id_", hashedId);
+   form.append("title", recordingSession.title);
+
+   setStatusText("Uploading…");
+   try {
+     const response = await fetch(
+       "http://192.168.64.30:5000/test-multiple-recordings",
+       {
+         method: "POST",
+         headers: {
+           Accept: "application/json",
+           Authorization: "Bearer " + jwt,
+         },
+         body: form,
+       }
+     );
+
+     const text = await response.text();
+     console.log("Raw /test-multiple-recordings response:", text);
+
+     try {
+       const json = JSON.parse(text);
+       if (json.error) {
+         setStatusText("Error: " + json.error);
+       } else {
+         setStatusText("Transcription: " + json.message);
+       }
+     } catch {
+       setStatusText("Unexpected server response");
+     }
+   } catch (e) {
+     console.error("Network error:", e);
+     setStatusText("Upload failed");
+   }
+ }
 
   return (
-      <View className="flex-1 bg-white">
-         <ThemedView className="sticky top-6 z-10 bg-white border-b border-gray-300 px-5 py-4">
-            <ThemedText type="title" className="text-center">
-              Recordings
-            </ThemedText>
-          </ThemedView>
-         <ParallaxScrollView headerBackgroundColor={{ light: '#FFFFFF', dark: '#FFFFFF' }}>
+    <View style={styles.container}>
+      <Text style={styles.title}>
+        Recordings (Session #{recordingSession.sessionId})
+      </Text>
+      <Text style={styles.status}>Status: {statusText}</Text>
 
-           <ThemedView className="py-4 space-y-4">
-             {/*<Text className="text-gray-700 text-base">Status: {statusText}</Text>*/}
-             {
-                recordings.length === 0 ?
-                <Text className="flex-1 text-center text-2xl text-gray-800 text-base">
-                   No recordings
-                 </Text>
-                 :
-                 <></>
-             }
+      <View style={styles.listContainer}>
+        {recordingSession.recordings.length === 0 ? (
+          <Text style={styles.noRec}>No recordings</Text>
+        ) : (
+          recordingSession.recordings.map((uri, idx) => (
+            <View key={idx} style={styles.recordingRow}>
+              <Text style={styles.recordingText}>Segment #{idx + 1}</Text>
+              <View style={styles.buttonsRow}>
+                {playingAt === idx ? (
+                  <TouchableOpacity onPress={() => pauseRecordingAt(idx)}>
+                    <Text style={styles.buttonIcon}>❚❚</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={() => playRecordingAt(idx)}>
+                    <Text style={styles.buttonIcon}>▶</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={() => deleteRecordingAt(idx)}>
+                  <Text style={styles.deleteIcon}>🗑️</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))
+        )}
+      </View>
 
-             {recordings.map((recording, index) => (
-               <View
-                 key={index}
-                 className="flex-row items-center justify-between bg-gray-200 rounded-md p-4 mb-3"
-               >
-                 {/*Title*/}
-                 <Text className="flex-1 text-gray-800 text-base">
-                   Recording #{index + 1}
-                 </Text>
-
-                 {/*Buttons*/}
-                 <View className="flex-row space-x-2">
-                    <TouchableOpacity>
-                      <View className="mr-2 w-10 h-10 flex items-center justify-center">
-                        {
-                           playingAt === index ?
-                           <AntDesign onPress={() => pauseRecordingAt(index)} name="pausecircleo" size={24} color="black" />
-                            :
-                           <AntDesign onPress={() => playRecordingAt(index)} name="play" size={24} color="black" />
-                        }
-                      </View>
-                    </TouchableOpacity>
-
-                   {/*Up button*/}
-                   <TouchableOpacity
-                     disabled={index === 0}
-                     onPress={() => index > 0 && rearrangeRecordings(index, index - 1)}
-                   >
-                     <View className={`mr-1 w-10 h-10 rounded-md flex items-center justify-center bg-gray-300 ${index === 0 ? 'opacity-50' : ''}`}>
-                       <AntDesign name="caretup" size={20} color="black" />
-                     </View>
-                   </TouchableOpacity>
-
-                   {/*Down button*/}
-                   <TouchableOpacity
-                     disabled={index === recordings.length - 1}
-                     onPress={() => rearrangeRecordings(index, index + 1)}
-                   >
-                     <View className={`mr-2 w-10 h-10 rounded-md flex items-center justify-center bg-gray-300 ${index === recordings.length - 1 ? 'opacity-50' : ''}`}>
-                       <AntDesign name="caretdown" size={20} color="black" />
-                     </View>
-                   </TouchableOpacity>
-                   {/* Delete button*/}
-                   <TouchableOpacity onPress={() => deleteRecordingAt(index)}>
-                     <View className="w-10 h-10 bg-red-500 rounded-md flex items-center justify-center">
-                       <FontAwesome5 name="trash" size={20} color="white" />
-                     </View>
-                   </TouchableOpacity>
-                 </View>
-               </View>
-             ))}
-
-           </ThemedView>
-         </ParallaxScrollView>
-
-         <TouchableOpacity
-          style={{ width: '75%', alignSelf: 'center' }}
-          className="bottom-10  bg-green-600 rounded-md p-4 mb-3"
-           onPress={handleUpload}
-         >
-           <Text className="text-white text-center font-semibold">Submit</Text>
-         </TouchableOpacity>
-       </View>
+      <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
+        <Text style={styles.uploadButtonText}>Submit Recording</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#ECEFF1",
+    paddingTop: Platform.OS === "ios" ? 20 : 0,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+
+  title: {
+    fontSize: 28,
+    fontWeight: "600",
+    textAlign: "center",
+    color: "#37474F",
+    marginVertical: 16,
   },
-  background: {
-    width: '100%',
-    height: '100%',
-    contentFit: 'cover',
+
+  status: {
+    fontSize: 14,
+    textAlign: "center",
+    color: "#607D8B",
+    marginBottom: 12,
   },
-  audioContainer: {
-    marginTop: 30,
-    alignItems: 'center',
-    gap: 10,
+
+  listContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
-  statusText: {
+
+  noRec: {
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
+    color: "#78909C",
+    textAlign: "center",
+    marginTop: 40,
   },
-  button: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    backgroundColor: '#4a90e2',
+
+  recordingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
-    width: 160,
-    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    marginVertical: 6,
+
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+
+    elevation: 2,
   },
-  submitButton: {
-    backgroundColor: '#34c759',
-  },
-  stopButton: {
-      paddingVertical: 12,
-      paddingHorizontal: 20,
-      borderRadius: 8,
-      width: 160,
-      alignItems: 'center',
-      backgroundColor: '#ff0000',
-  },
-  buttonText: {
-    color: '#fff',
+
+  recordingText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    color: "#37474F",
+    fontWeight: "500",
+  },
+
+  buttonsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  buttonIcon: {
+    fontSize: 20,
+    color: "#37474F",
+    marginHorizontal: 8,
+  },
+
+  deleteIcon: {
+    fontSize: 20,
+    color: "#E53935",
+    marginHorizontal: 8,
+  },
+
+  uploadButton: {
+    backgroundColor: "#34C759",
+    paddingVertical: 16,
+    marginHorizontal: 32,
+    marginVertical: 20,
+    borderRadius: 8,
+    alignItems: "center",
+
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+
+    elevation: 3,
+  },
+
+  uploadButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

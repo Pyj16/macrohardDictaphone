@@ -78,7 +78,7 @@ export default function CreateSession() {
   async function getAllPatients(){
       console.log('fetching all patients')
       const token = "Bearer " + jwt
-      fetch('http://192.168.1.177:5000/fetch-patients', {
+      fetch('http://192.168.64.30:5000/fetch-patients', {
                     method: 'POST',
                     headers: {Accept: '*', 'Content-Type': 'application/json', Authorization: token},
                     body: JSON.stringify({"doctor_email": userInfo.email})
@@ -143,7 +143,6 @@ export default function CreateSession() {
             </Picker>
         </View>
 
-        {/* Submit button */}
         <TouchableOpacity
           className="bg-blue-600 rounded-md py-3 mx-4 mt-6"
           onPress={handleCreate}
@@ -158,53 +157,56 @@ export default function CreateSession() {
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  background: {
-    width: '100%',
-    height: '100%',
-    contentFit: 'cover',
-  },
-  audioContainer: {
-    marginTop: 30,
-    alignItems: 'center',
-    gap: 10,
-  },
-  statusText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 10,
-  },
-  button: {
-    paddingVertical: 12,
+  headerContainer: {
+    position: "sticky",
+    top: 6,
+    zIndex: 10,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#D1D5DB",
     paddingHorizontal: 20,
-    backgroundColor: '#4a90e2',
+    paddingVertical: 16,
+  },
+  headerText: {
+    fontSize: 24,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
     borderRadius: 8,
-    width: 160,
-    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginHorizontal: 16,
+    marginVertical: 0,
   },
-  submitButton: {
-    backgroundColor: '#34c759',
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    marginHorizontal: 16,
+    marginVertical: 0,
+    paddingHorizontal: 8,
   },
-  stopButton: {
-      paddingVertical: 12,
-      paddingHorizontal: 20,
-      borderRadius: 8,
-      width: 160,
-      alignItems: 'center',
-      backgroundColor: '#ff0000',
+  createButton: {
+    backgroundColor: "#2563EB",
+    borderRadius: 8,
+    paddingVertical: 12,
+    marginHorizontal: 16,
+    marginTop: 24,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  createButtonText: {
+    color: "#FFFFFF",
+    textAlign: "center",
+    fontWeight: "600",
   },
 });
+

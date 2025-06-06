@@ -41,9 +41,9 @@ export default function DrawerLayout() {
         }}
       />
       <Drawer.Screen
-        name="debug"
+        name="personel"
         options={{
-          title: 'Debug',
+          title: 'Personel',
           drawerIcon: ({ color, size }) => (
             <IconSymbol name="paperplane.fill" color={color} size={size} />
           ),
