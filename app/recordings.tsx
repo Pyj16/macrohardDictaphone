@@ -152,7 +152,7 @@ export default function Recordings() {
    setStatusText("Uploading…");
    try {
      const response = await fetch(
-       "http://192.168.64.30:5000/test-multiple-recordings",
+       "https://mediphone-backend-854458745933.europe-west8.run.app/multiple-recordings",
        {
          method: "POST",
          headers: {

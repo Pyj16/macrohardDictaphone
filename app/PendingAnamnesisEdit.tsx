@@ -49,7 +49,7 @@ export default function PendingAnamnesisEdit() {
 
     try {
       const res = await fetch(
-        "http://192.168.64.30:5000/update-personel-anamnesis",
+        "https://mediphone-backend-854458745933.europe-west8.run.app/update-personel-anamnesis",
         {
           method: "POST",
           headers: {

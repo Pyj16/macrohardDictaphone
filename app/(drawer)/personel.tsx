@@ -49,7 +49,7 @@ export default function Personel() {
 
     try {
       const res = await fetch(
-        "http://192.168.64.30:5000/fetch-pending-anamnesis-all",
+        "https://mediphone-backend-854458745933.europe-west8.run.app/fetch-pending-anamnesis-all",
         {
           method: "GET",
           headers: {

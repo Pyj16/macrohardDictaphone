@@ -52,7 +52,7 @@ export default function AnamnesisDetail() {
         return;
       }
 
-      const response = await fetch('http://192.168.64.30:5000/test-rsa-update', {
+      const response = await fetch('https://mediphone-backend-854458745933.europe-west8.run.app/update-anamnesis', {
         method: 'POST',
         headers: {
           Accept: 'application/json',

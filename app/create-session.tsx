@@ -78,7 +78,7 @@ export default function CreateSession() {
   async function getAllPatients(){
       console.log('fetching all patients')
       const token = "Bearer " + jwt
-      fetch('http://192.168.64.30:5000/fetch-patients', {
+      fetch('https://mediphone-backend-854458745933.europe-west8.run.app/fetch-patients', {
                     method: 'POST',
                     headers: {Accept: '*', 'Content-Type': 'application/json', Authorization: token},
                     body: JSON.stringify({"doctor_email": userInfo.email})

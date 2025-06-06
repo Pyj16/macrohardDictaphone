@@ -27,7 +27,7 @@ export default function DoctorDetail() {
         console.error('❌ No token found. Please log in.');
         return;
       }
-      const res = await fetch('http://192.168.64.30:5000/fetch-patients', {
+      const res = await fetch('https://mediphone-backend-854458745933.europe-west8.run.app/fetch-patients', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -57,7 +57,7 @@ export default function DoctorDetail() {
         return;
       }
 
-      const response = await fetch('http://192.168.64.30:5000/fetch-anamnesis', {
+      const response = await fetch('https://mediphone-backend-854458745933.europe-west8.run.app/fetch-anamnesis', {
         method: 'POST',
         headers: {
           Accept: 'application/json',
