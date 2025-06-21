@@ -1,5 +1,8 @@
 // app/_layout.tsx
+import React, {useEffect, useState} from "react";
+import { usePathname, Redirect, Slot, useRouter } from "expo-router";
 
+/*
 import React from "react";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
@@ -53,7 +56,6 @@ function RootNavigation() {
   ) {
     return <Redirect href="/personel" />;
   }
-
   if (
     userInfo &&
     userInfo.role === "personel" &&
@@ -64,3 +66,69 @@ function RootNavigation() {
 
   return <Slot />;
 }
+	*/
+
+export default function RootLayout() {
+    return <RootNavigation />;
+}
+
+
+
+function RootNavigation() {
+    const router = useRouter();
+    const [isReady, setIsReady] = useState(false);
+
+    // Wait until layout has mounted
+    useEffect(() => {
+        setTimeout(() => {
+            setIsReady(true);
+        }, 0);
+    }, []);
+
+    useEffect(() => {
+        if (isReady) {
+            router.replace("/(tabs)/(doctor)");
+        }
+    }, [isReady]);
+
+    return <Slot />;
+}
+
+
+
+/*
+export default function RootNavigation() {
+   //const { userInfo, loading } = useAuth();
+  const pathname = usePathname().toLowerCase();
+
+  if (loading) {
+    return null;
+  }
+
+  const isOnLogin = pathname.startsWith("/login");
+  if (!userInfo && !isOnLogin) {
+    return <Redirect href="/login" />;
+  }
+
+  if (userInfo && userInfo.role !== "personel" && pathname.startsWith("/personel")) {
+    return <Redirect href="/" />;
+  }
+  if (
+    userInfo &&
+    userInfo.role === "personel" &&
+    pathname.startsWith("/index")
+  ) {
+    return <Redirect href="/personel" />;
+  }
+  if (
+    userInfo &&
+    userInfo.role === "personel" &&
+    pathname.startsWith("/statistics")
+  ) {
+    return <Redirect href="/personel" />;
+  }
+
+  return <Slot />;
+}
+  */
+
