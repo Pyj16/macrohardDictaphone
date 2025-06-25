@@ -3,18 +3,19 @@ import {Text, View, ScrollView, SafeAreaView, TouchableOpacity, Pressable, Modal
 import PatientOverlay from "@/app/components/PatientsOverlay";
 import {patients, anamnesis, doctors} from "@/app/data/medical-dev-data";
 import {AnamnesisType, DoctorType} from "@/app/types/MedicalTypes";
-
+import { useRouter } from "expo-router";
 export default function DoctorHome() {
 
 
-    const [showPatients, setShowPatients] = useState(false);
+    const [showPatients, setShowPatients] = useState<boolean>(false);
 
 
     //const [anamnesis, setAnamnesis] = useState<tempAnamnesis[]>([]);
 
     const [loading, setLoading] = useState<boolean>(false);
     const [selectedAnamnesis, setSelectedAnamnesis] = useState<AnamnesisType>();
-    const [showOverlay, setShowOverlay] = useState<boolean>(true);
+    const [showOverlay, setShowOverlay] = useState<boolean>(false);
+    const router = useRouter();
 
     const doctor: DoctorType = doctors[0];
 
@@ -139,13 +140,13 @@ export default function DoctorHome() {
                 <Pressable
                     onPress={() => {
                         console.log("Mic pressed");
-                        // Trigger overlay or navigation if needed
+                        router.push("/(tabs)/(doctor)/list-sessions");
                     }}
                     className="w-24 h-24 rounded-full items-center justify-center"
                     style={{ backgroundColor: "#00A8E8" }}
                 >
                     <Image
-                        source={require("../../../assets/images/microphone.png")}
+                        source={require("../../assets/images/microphone.png")}
                         style={{ width: 40, height: 40, tintColor: "#fff" }}
                         resizeMode="contain"
                     />

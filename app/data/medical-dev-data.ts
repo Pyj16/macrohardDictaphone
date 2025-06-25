@@ -1,4 +1,4 @@
-import {AnamnesisType, DoctorType, PatientType} from "@/app/types/MedicalTypes";
+import {AnamnesisType, DoctorType, PatientType, SessionPatientType} from "@/app/types/MedicalTypes";
 
 export const doctors: DoctorType[] = [{
     id: 1,
@@ -63,3 +63,21 @@ export const anamnesis: AnamnesisType[] = [
     },
 ];
 
+
+export const sessionPatients: SessionPatientType[] = [
+    {
+        id: 1,
+        name: 'John',
+        surname: 'Doe',
+    },
+    {
+        id: 2,
+        name: 'Chris',
+        surname: 'Doe',
+    },
+    {
+        id: 3,
+        name: 'Jane',
+        surname: 'Doe',
+    }
+]

@@ -72,10 +72,12 @@ export default function RootLayout() {
     return <RootNavigation />;
 }
 
+import { useColorScheme } from 'react-native';
 
 
 function RootNavigation() {
     const router = useRouter();
+    const scheme = useColorScheme();
     const [isReady, setIsReady] = useState(false);
 
     // Wait until layout has mounted

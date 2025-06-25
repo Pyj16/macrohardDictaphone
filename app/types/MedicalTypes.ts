@@ -6,6 +6,12 @@ export interface PatientType {
     birthday: string;
 }
 
+export interface SessionPatientType {
+    id: number;
+    name: string;
+    surname: string;
+}
+
 export interface DoctorType {
     id: number;
     name: string;
@@ -22,3 +28,4 @@ export interface AnamnesisType {
     doctor: DoctorType;
     date: string;
 }
+
