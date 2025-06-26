@@ -1,12 +1,14 @@
-import React, { useEffect, useState } from "react";
-import {View, Text, TouchableOpacity, Pressable} from "react-native";
+import React, { useEffect, useState, useRef } from "react";
+import {View, Text, Pressable, Alert} from "react-native";
 import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useAudioPlayer } from "expo-audio";
-import { sha256 } from "react-native-sha256";
+import {AudioModule, AudioQuality, IOSOutputFormat, useAudioPlayer, useAudioRecorder} from "expo-audio";
+//import { sha256 } from "react-native-sha256";
+import * as Crypto from "expo-crypto"; // TODO Figure out why sha256 is broken
 import UploadButton from "@/app/components/Recordings/UploadButton";
 import RecordingList from "@/app/components/Recordings/RecordingList";
 import RecordingOverlay from "@/app/components/Recordings/RecordingOverlay";
+import SERVER_URL from "@/constants/serverSettings";
 
 
 type RecordingSession = {
@@ -22,18 +24,22 @@ type RecordingSession = {
 export default function Recordings() {
     const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
     const router = useRouter();
-    const player = useAudioPlayer();
 
-    const [recordingSession, setRecordingSession] = useState<RecordingSession | null>(null);
-    const [statusText, setStatusText] = useState("Idle");
-    const [playingAt, setPlayingAt] = useState<number>(-1);
-    const [showOverlay, setShowOverlay] = useState<boolean>(false);
-    const [isRecording, setIsRecording] = useState<boolean>(false);
-    const toggleRecording = () => {
-        setIsRecording((prev) => !prev);
-        // TODO: add actual recording logic here
-    };
+    useEffect(() => {
+        sha256("test")
+            .then(console.log)
+            .catch(console.error);
+    }, []);
 
+
+    useEffect(() => {
+        (async () => {
+            const status = await AudioModule.requestRecordingPermissionsAsync();
+            if (!status.granted) {
+                Alert.alert('Permission to access microphone was denied');
+            }
+        })();
+    }, []);
 
     useEffect(() => {
         async function loadSession() {
@@ -50,6 +56,39 @@ export default function Recordings() {
         loadSession();
     }, [sessionId]);
 
+    const player = useAudioPlayer();
+    const audioRecorder = useAudioRecorder({
+            extension: '.wav',
+            sampleRate: 44100,
+            numberOfChannels: 2,
+            bitRate: 128000,
+            android: {
+                outputFormat: 'mpeg4',
+                audioEncoder: 'aac',
+            },
+            ios: {
+                outputFormat: IOSOutputFormat.MPEG4AAC,
+                audioQuality: AudioQuality.MAX,
+                linearPCMBitDepth: 16,
+                linearPCMIsBigEndian: false,
+                linearPCMIsFloat: false,
+            },
+            web: {
+                mimeType: 'audio/webm',
+                bitsPerSecond: 128000,
+            },
+        }
+    );
+
+    const [recordingSession, setRecordingSession] = useState<RecordingSession | null>(null);
+    const [statusText, setStatusText] = useState<string>("Idle");
+    const [playingAt, setPlayingAt] = useState<number>(-1);
+    const [showOverlay, setShowOverlay] = useState<boolean>(false);
+    const [isRecording, setIsRecording] = useState<boolean>(false);
+
+
+
+
     const persistSession = async (session: RecordingSession) => {
         const sessionPath = FileSystem.documentDirectory + `sessions/session-${session.sessionId}`;
         try {
@@ -62,8 +101,52 @@ export default function Recordings() {
         }
     };
 
+    const startRecording = async () => {
+        await audioRecorder.prepareToRecordAsync()
+        audioRecorder.record();
+        setStatusText("Recording...");
+        setIsRecording(true);
 
+    }
+    const stopRecording = async () => {
+        await audioRecorder.stop()
+        setIsRecording(false);
+        return audioRecorder.uri
+    }
 
+    const toggleRecording = async () => {
+        if (!recordingSession) return;
+
+        if (!isRecording) {
+            try {
+                await startRecording();
+            } catch (e) {
+                console.error("Failed to start recording:", e);
+                setStatusText("Failed to start recording");
+            }
+        } else {
+            try {
+                const uri = await stopRecording(); // returns { uri }
+                setIsRecording(false);
+
+                if (!uri) {
+                    setStatusText("No file saved");
+                    return;
+                }
+
+                const updated = {
+                    ...recordingSession,
+                    recordings: [...recordingSession.recordings, uri],
+                };
+                setRecordingSession(updated);
+                await persistSession(updated);
+                setStatusText("Recording saved");
+            } catch (e) {
+                console.error("Failed to stop recording:", e);
+                setStatusText("Failed to save recording");
+            }
+        }
+    };
 
 
 
@@ -97,11 +180,13 @@ export default function Recordings() {
             recordings: recordingSession.recordings.filter((_, idx) => idx !== i),
         };
         setRecordingSession(updated);
-        persistSession(updated);
+        await persistSession(updated);
     };
 
     function parseUriFile(uri: string, index: number): { name: string; type: string; uri: string } {
+
         const normalizedUri = uri.endsWith('.wav') ? uri : uri + '.wav';
+        console.log(uri, normalizedUri);
         return {
             uri: normalizedUri,
             name: `segment-${index + 1}.wav`,
@@ -109,8 +194,8 @@ export default function Recordings() {
         };
     }
 
-
     const handleUpload = async () => {
+        console.log(recordingSession);
         if (!recordingSession || !recordingSession.recordings.length) {
             setStatusText("No recordings found");
             return;
@@ -118,9 +203,9 @@ export default function Recordings() {
 
         const form = new FormData();
         setStatusText("Preparing files…");
-
         try {
-            recordingSession.recordings.forEach((uri, i) => {
+            recordingSession.recordings.map(async (uri, i) => {
+                setStatusText(uri)
                 const file = parseUriFile(uri, i);
                 form.append("audio_files", file as any);
             });
@@ -130,14 +215,19 @@ export default function Recordings() {
             return;
         }
 
-        const hashedId = await sha256(recordingSession.patientId.toString());
+        setStatusText(`Files prepred, starting to hash value ${recordingSession.patientId}`)
+
+        let hashedId_ = await sha256(recordingSession.patientId.toString());
+        const hashedId = "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b";
+        console.log(hashedId);
+        setStatusText(hashedId);
         form.append("id_", hashedId);
         form.append("title", recordingSession.title);
 
         setStatusText("Uploading…");
         try {
             const response = await fetch(
-                "https://mediphone-backend-854458745933.europe-west8.run.app/multiple-recordings",
+                `${SERVER_URL}/multiple-recordings`,
                 {
                     method: "POST",
                     headers: {
@@ -150,7 +240,7 @@ export default function Recordings() {
             const text = await response.text();
             try {
                 const json = JSON.parse(text);
-                setStatusText(json.error ? "Error: " + json.error : "Transcription: " + json.message);
+                setStatusText(json.error ? "Error: " + json.error : "status: " + json.status);
             } catch {
                 setStatusText("Unexpected server response");
             }
