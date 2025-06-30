@@ -1,19 +1,11 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, BackHandler } from 'react-native';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View, BackHandler } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import {Recording} from "expo-av/build/Audio/Recording";
 import {RouteProp, useRoute} from "@react-navigation/core";
-import {setParams} from "expo-router/build/global-state/routing";
 import { useEffect, useState} from 'react';
-import { useAudioPlayer } from 'expo-audio';
 import {useNavigation} from '@react-navigation/native';
-import { Stack, usePathname, Redirect, Slot } from 'expo-router';
-
-import axios from 'axios';
 
 import * as FileSystem from 'expo-file-system';
 import { StorageAccessFramework } from 'expo-file-system';

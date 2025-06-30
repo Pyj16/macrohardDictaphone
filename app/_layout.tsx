@@ -1,7 +1,7 @@
 // app/_layout.tsx
 import React, {useEffect, useState} from "react";
 import { usePathname, Redirect, Slot, useRouter } from "expo-router";
-
+// import { role } from authContext<
 /*
 import React from "react";
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
@@ -78,6 +78,7 @@ import { useColorScheme } from 'react-native';
 function RootNavigation() {
     const router = useRouter();
     const scheme = useColorScheme();
+
     const [isReady, setIsReady] = useState(false);
 
     // Wait until layout has mounted
@@ -89,9 +90,11 @@ function RootNavigation() {
 
     useEffect(() => {
         if (isReady) {
-            router.replace("/(tabs)/(doctor)");
-        }
-    }, [isReady]);
+            //1if (role === 'doctor'){
+            if (isReady)
+                router.replace('/(tabs)/(doctor)');
+            }
+        }, [isReady]);
 
     return <Slot />;
 }

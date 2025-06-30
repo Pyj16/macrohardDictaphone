@@ -1,20 +1,13 @@
 import { Image } from 'expo-image';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {  StyleSheet, Text, TouchableOpacity, } from 'react-native';
 
-import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import {useNavigation} from "@react-navigation/native";
 import React from "react";
-import {Recording} from "expo-av/build/Audio/Recording";
-import {Audio} from "expo-av";
-import {GoogleSigninButton} from "@react-native-google-signin/google-signin";
-import {signIn} from "@/app/services/authContext";
 
-import RNRsa from 'react-native-rsa-native';
-import AesGcmCrypto from 'react-native-aes-gcm-crypto';
-import { Buffer } from 'buffer';
+
 import { useEffect } from 'react';
 import 'react-native-get-random-values';
 import { public_key } from '@/app/key.ts'
@@ -26,7 +19,7 @@ export default function Debug() {
   const [recordings, setRecordings] = React.useState([]);
 
   const [statusText, setStatusText] = React.useState<string>("Idle");
-
+/*
   useEffect(() => {
       (async () => {
 //         const RSAencrypted = await RNRsa.encrypt('hello RSA', public_key);
@@ -44,6 +37,8 @@ export default function Debug() {
       })();
     }, []);
 
+
+ */
 
   async function startRecording(){
 

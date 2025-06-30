@@ -3,12 +3,13 @@ import {View, Text, Pressable, Alert} from "react-native";
 import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {AudioModule, AudioQuality, IOSOutputFormat, useAudioPlayer, useAudioRecorder} from "expo-audio";
-//import { sha256 } from "react-native-sha256";
-import * as Crypto from "expo-crypto"; // TODO Figure out why sha256 is broken
 import UploadButton from "@/app/components/Recordings/UploadButton";
 import RecordingList from "@/app/components/Recordings/RecordingList";
 import RecordingOverlay from "@/app/components/Recordings/RecordingOverlay";
-import SERVER_URL from "@/constants/serverSettings";
+import SERVER_URL, {public_key} from "@/constants/serverSettings";
+import { RSA } from 'react-native-rsa-native';
+import serverSettings from "@/constants/serverSettings";
+import decryptAesGcm from "@/app/services/encryption";
 
 
 type RecordingSession = {
@@ -26,11 +27,23 @@ export default function Recordings() {
     const router = useRouter();
 
     useEffect(() => {
-        sha256("test")
-            .then(console.log)
-            .catch(console.error);
-    }, []);
 
+        let message = "my secret message";
+
+        RSA.generateKeys(4096) // set key size
+            .then(keys => {
+                console.log('4096 private:', keys.private); // the private key
+                console.log('4096 public:', keys.public); // the public key
+                RSA.encrypt(message, keys.public)
+                    .then(encodedMessage => {
+                        console.log(`the encoded message is ${encodedMessage}`);
+                        RSA.decrypt(encodedMessage, keys.private)
+                            .then(decryptedMessage => {
+                                console.log(`The original message was ${decryptedMessage}`);
+                            });
+                    });
+            });
+    }, []);
 
     useEffect(() => {
         (async () => {
@@ -87,8 +100,6 @@ export default function Recordings() {
     const [isRecording, setIsRecording] = useState<boolean>(false);
 
 
-
-
     const persistSession = async (session: RecordingSession) => {
         const sessionPath = FileSystem.documentDirectory + `sessions/session-${session.sessionId}`;
         try {
@@ -108,6 +119,7 @@ export default function Recordings() {
         setIsRecording(true);
 
     }
+
     const stopRecording = async () => {
         await audioRecorder.stop()
         setIsRecording(false);
@@ -147,8 +159,6 @@ export default function Recordings() {
             }
         }
     };
-
-
 
     const playRecordingAt = (i: number) => {
         const uri = recordingSession?.recordings[i];
@@ -201,53 +211,88 @@ export default function Recordings() {
             return;
         }
 
-        const form = new FormData();
-        setStatusText("Preparing files…");
-        try {
-            recordingSession.recordings.map(async (uri, i) => {
-                setStatusText(uri)
-                const file = parseUriFile(uri, i);
-                form.append("audio_files", file as any);
-            });
-        } catch (e) {
-            console.error("Failed to prepare audio files:", e);
-            setStatusText("File prep failed");
-            return;
-        }
-
         setStatusText(`Files prepred, starting to hash value ${recordingSession.patientId}`)
 
-        let hashedId_ = await sha256(recordingSession.patientId.toString());
-        const hashedId = "6b86b273ff34fce19d6b804eff5a3f5747ada4eaa22f1d49c01e52ddb7875b4b";
-        console.log(hashedId);
-        setStatusText(hashedId);
-        form.append("id_", hashedId);
-        form.append("title", recordingSession.title);
-
-        setStatusText("Uploading…");
         try {
-            const response = await fetch(
-                `${SERVER_URL}/multiple-recordings`,
-                {
-                    method: "POST",
-                    headers: {
-                        Accept: "application/json",
-                    },
-                    body: form,
-                }
-            );
+            const keypair = await RSA.generateKeys(2048)
+            const publicKey = keypair.public;
+            const response = await fetch('http://192.168.1.131:5000/fetch-anamnesis', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({public_key: publicKey}),
+            })
+            const rawText = await response.text();
+            console.log('raw fetch-anamnesis response:', rawText.slice(0, 200));
 
-            const text = await response.text();
+            let data: any;
             try {
-                const json = JSON.parse(text);
-                setStatusText(json.error ? "Error: " + json.error : "status: " + json.status);
-            } catch {
-                setStatusText("Unexpected server response");
+                data = JSON.parse(rawText);
+            } catch (error) {
+                console.error("Failed to parse response", error);
+                return;
             }
+            if (!data || !Array.isArray(data)) {
+                console.error("Unexpected structure", data);
+            }
+
+            const dcKey = await RSA.decrypt64(data.encrypted_key, keypair.private);
+            console.log('Decrypted key: ', dcKey);
+
+            const one = data.anamnesis[0];
+            const decrypted = decryptAesGcm(one.content, dcKey)
+            console.log(decrypted);
+
         } catch (e) {
-            console.error("Network error:", e);
-            setStatusText("Upload failed");
+            console.error("Failed to parse response", e);
         }
+
+    //     const form = new FormData();
+    //     setStatusText("Preparing files…");
+    //     try {
+    //         recordingSession.recordings.map(async (uri, i) => {
+    //             setStatusText(uri)
+    //             const file = parseUriFile(uri, i);
+    //             form.append("audio_files", file as any);
+    //         });
+    //     } catch (e) {
+    //         console.error("Failed to prepare audio files:", e);
+    //         setStatusText("File prep failed");
+    //         return;
+    //     }
+    //
+    //     form.append("id_", recordingSession.patientId.toString());
+    //     form.append("title", recordingSession.title);
+    //
+    //     setStatusText("Uploading…");
+    //     // TODO Encrypt audio files
+    //     try {
+    //         const response = await fetch(
+    //             `${SERVER_URL}/multiple-recordings`,
+    //             {
+    //                 method: "POST",
+    //                 headers: {
+    //                     Accept: "application/json",
+    //                 },
+    //                 body: form,
+    //             }
+    //         );
+    //
+    //         const text = await response.text();
+    //         try {
+    //             const json = JSON.parse(text);
+    //             setStatusText(json.error ? "Error: " + json.error : "status: " + json.status);
+    //         } catch {
+    //             setStatusText("Unexpected server response");
+    //         }
+    //     } catch (e) {
+    //         console.error("Network error:", e);
+    //         setStatusText("Upload failed");
+    //     }
+    //
+    //
     };
 
     if (!recordingSession) {

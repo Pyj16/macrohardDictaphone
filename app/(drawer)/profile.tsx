@@ -10,53 +10,54 @@ import {
   Platform,
   SafeAreaView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '../services/authContext';
 
 export default function LoginScreen() {
-  const { signIn, signOut, userInfo } = useAuth();
-  const router = useRouter();
+  const userInfo = null; // Placeholder until MS login is added
 
   const handleSignIn = async () => {
-    await signIn();
-    // Optionally, redirect to home after sign-in:
-    // router.replace('/');
+    // TODO: Replace with Microsoft sign-in logic
+    console.log("Sign in clicked");
+  };
+
+  const handleSignOut = () => {
+    // TODO: Replace with Microsoft sign-out logic
+    console.log("Sign out clicked");
   };
 
   return (
-    <SafeAreaView style={styles.outerContainer}>
-      <View style={styles.container}>
-        <View style={styles.card}>
-          {!userInfo ? (
-            <>
-              <Text style={styles.heading}>Welcome Back</Text>
-              <Text style={styles.subtext}>
-                Please sign in with your Google account to continue.
-              </Text>
+      <SafeAreaView style={styles.outerContainer}>
+        <View style={styles.container}>
+          <View style={styles.card}>
+            {!userInfo ? (
+                <>
+                  <Text style={styles.heading}>Welcome Back</Text>
+                  <Text style={styles.subtext}>
+                    Please sign in to continue.
+                  </Text>
 
-              <View style={styles.buttonWrapper}>
-                <Button title="Sign in with Google" onPress={handleSignIn} />
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={styles.heading}>Hello, {userInfo.name}!</Text>
-              {userInfo.photo && (
-                <Image source={{ uri: userInfo.photo }} style={styles.avatar} />
-              )}
-              <Text style={styles.email}>{userInfo.email}</Text>
-              <View style={styles.buttonWrapper}>
-                <Button
-                  title="Log Out"
-                  onPress={signOut}
-                  color={Platform.OS === 'ios' ? '#ff3b30' : '#d9534f'}
-                />
-              </View>
-            </>
-          )}
+                  <View style={styles.buttonWrapper}>
+                    <Button title="Sign in" onPress={handleSignIn} />
+                  </View>
+                </>
+            ) : (
+                <>
+                  <Text style={styles.heading}>Hello, {userInfo.name}!</Text>
+                  {userInfo.photo && (
+                      <Image source={{ uri: userInfo.photo }} style={styles.avatar} />
+                  )}
+                  <Text style={styles.email}>{userInfo.email}</Text>
+                  <View style={styles.buttonWrapper}>
+                    <Button
+                        title="Log Out"
+                        onPress={handleSignOut}
+                        color={Platform.OS === 'ios' ? '#ff3b30' : '#d9534f'}
+                    />
+                  </View>
+                </>
+            )}
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
   );
 }
 
@@ -78,12 +79,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 32,
     paddingHorizontal: 24,
-    // iOS shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    // Android shadow
     elevation: 4,
     alignItems: 'center',
   },

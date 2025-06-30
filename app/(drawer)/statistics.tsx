@@ -25,6 +25,7 @@ export default function Statistics() {
   const [doctorSort, setDoctorSort] = useState('name');
   const [hospitalSort, setHospitalSort] = useState('name');
 
+  /*
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -52,6 +53,8 @@ export default function Statistics() {
 
     fetchStats();
   }, []);
+
+   */
 
   const filteredDoctors = [...doctorStats]
     .filter(d =>

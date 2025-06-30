@@ -20,6 +20,8 @@ export interface DoctorType {
     email: string;
 }
 
+
+
 export interface AnamnesisType {
     id: number;
     title: string;

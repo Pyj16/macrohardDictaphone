@@ -17,7 +17,7 @@ export default function DoctorHome() {
     const [showOverlay, setShowOverlay] = useState<boolean>(false);
     const router = useRouter();
 
-    const doctor: DoctorType = doctors[0];
+    const doctor: DoctorType = doctors[0]; // TODO fetch actual authenticated doctor
 
     const handleAnamnesisPress = (anamnesis: AnamnesisType) => {
         setSelectedAnamnesis(anamnesis);
