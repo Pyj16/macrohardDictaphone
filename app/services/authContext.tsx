@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {authorize} from "react-native-app-auth";
 
 interface AuthContextType {
   userInfo: any;
@@ -10,10 +11,23 @@ interface AuthContextType {
   loading: boolean;
 }
 
+const authConfig = {
+  issuer: 'https://login.microsoftonline.com/common',
+  clientId: '26914f1a-16e5-4e55-9b8c-e854c070bd41',
+  redirectUrl: 'msauth://com.peklar.macrohardDictaphone/u4ofewHWTazty896p0ZBXll4Eas%3D',
+  scopes: ['openid', 'profile', 'email'],
+  serviceConfiguration: {
+    authorizationEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    tokenEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+  },
+};
+
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+  console.log("context:", context);
   if (!context) throw new Error('useAuth must be used inside an AuthProvider');
   return context;
 };
@@ -25,6 +39,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async () => {
     // Placeholder for Microsoft Sign-In
+    try {
+      const result = await authorize(authConfig);
+      console.log('Authorization Result:', result);
+    } catch (error) {
+      console.error('Authorization Error:', error);
+    }
     console.log('SignIn called - Replace with Microsoft Auth');
   };
 

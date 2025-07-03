@@ -2,51 +2,38 @@
 import React, {useEffect, useState} from "react";
 import { usePathname, Redirect, Slot, useRouter } from "expo-router";
 // import { role } from authContext<
-/*
-import React from "react";
+
 import { DarkTheme, DefaultTheme, ThemeProvider } from "@react-navigation/native";
 import { useFonts } from "expo-font";
-import { usePathname, Redirect, Slot } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { AuthProvider, useAuth } from "./services/authContext";
 import "react-native-reanimated";
 
-import { useColorScheme } from "@/hooks/useColorScheme";
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
-  });
-
-  if (!loaded) {
-    return null;
-  }
-
-  return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <RootNavigation />
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </AuthProvider>
-  );
-}
+// import { useColorScheme } from "@/hooks/useColorScheme";
 
 function RootNavigation() {
+  const router = useRouter();
   const { userInfo, loading } = useAuth();
   const pathname = usePathname().toLowerCase();
 
-  if (loading) {
-    return null;
-  }
+  useEffect(() => {
+    console.log("Home Screen");
+  }, []);
+
+//   if (loading) {
+//     console.log('loading');
+//     return null;
+//   }
 
   const isOnLogin = pathname.startsWith("/login");
   if (!userInfo && !isOnLogin) {
+    console.log('going to login');
     return <Redirect href="/login" />;
   }
 
-  if (userInfo && userInfo.role !== "personel" && pathname.startsWith("/personel")) {
+
+  if (userInfo && userInfo.role !== "personel" && pathname.startsWith("/(tabs)/(administrator)")) {
+    console.log('going to admin');
     return <Redirect href="/" />;
   }
   if (
@@ -54,86 +41,52 @@ function RootNavigation() {
     userInfo.role === "personel" &&
     pathname.startsWith("/index")
   ) {
-    return <Redirect href="/personel" />;
+    console.log('going to admin');
+    return <Redirect href="/(tabs)/(administrator)" />;
   }
   if (
     userInfo &&
     userInfo.role === "personel" &&
     pathname.startsWith("/statistics")
   ) {
-    return <Redirect href="/personel" />;
+    console.log('going to admin');
+    return <Redirect href="/(tabs)/(administrator)" />;
   }
 
   return <Slot />;
 }
-	*/
 
 export default function RootLayout() {
-    return <RootNavigation />;
+  return (
+      <AuthProvider>
+        <RootNavigation />
+      </AuthProvider>
+  );
 }
 
 import { useColorScheme } from 'react-native';
 
 
-function RootNavigation() {
-    const router = useRouter();
-    const scheme = useColorScheme();
-
-    const [isReady, setIsReady] = useState(false);
-
-    // Wait until layout has mounted
-    useEffect(() => {
-        setTimeout(() => {
-            setIsReady(true);
-        }, 0);
-    }, []);
-
-    useEffect(() => {
-        if (isReady) {
-            //1if (role === 'doctor'){
-            if (isReady)
-                router.replace('/(tabs)/(doctor)');
-            }
-        }, [isReady]);
-
-    return <Slot />;
-}
-
-
-
-/*
-export default function RootNavigation() {
-   //const { userInfo, loading } = useAuth();
-  const pathname = usePathname().toLowerCase();
-
-  if (loading) {
-    return null;
-  }
-
-  const isOnLogin = pathname.startsWith("/login");
-  if (!userInfo && !isOnLogin) {
-    return <Redirect href="/login" />;
-  }
-
-  if (userInfo && userInfo.role !== "personel" && pathname.startsWith("/personel")) {
-    return <Redirect href="/" />;
-  }
-  if (
-    userInfo &&
-    userInfo.role === "personel" &&
-    pathname.startsWith("/index")
-  ) {
-    return <Redirect href="/personel" />;
-  }
-  if (
-    userInfo &&
-    userInfo.role === "personel" &&
-    pathname.startsWith("/statistics")
-  ) {
-    return <Redirect href="/personel" />;
-  }
-
-  return <Slot />;
-}
-  */
-
+// function RootNavigation() {
+//   const router = useRouter();
+//   const scheme = useColorScheme();
+//
+//   const [isReady, setIsReady] = useState(false);
+//
+//   // Wait until layout has mounted
+//   useEffect(() => {
+//     setTimeout(() => {
+//       setIsReady(true);
+//     }, 0);
+//   }, []);
+//
+//   useEffect(() => {
+//     if (isReady) {
+//       //1if (role === 'doctor'){
+//       if (isReady)
+//         router.replace('/(tabs)/(doctor)');
+//     }
+//   }, [isReady]);
+//
+//   return <Slot />;
+// }
