@@ -3,8 +3,10 @@ module.exports = function (api) {
   return {
     presets: [
       ["babel-preset-expo", { jsxImportSource: "nativewind" }],
-      "nativewind/babel",
     ],
-
+    plugins: [
+      // Move nativewind/babel to plugins and make it conditional for tests
+      ...(process.env.NODE_ENV !== 'test' ? ['nativewind/babel'] : []),
+    ],
   };
 };
