@@ -31,14 +31,14 @@ export default function PatientOverlay({ visible, onClose, patients }: {visible:
 
                     <FlatList
                         data={patients}
-                        keyExtractor={(item) => item.medicalId}
+                        keyExtractor={(item) => item.medical_card_id}
                         renderItem={({ item }) => (
-                            <View className="mb-4 border border-gray-200 rounded-xl p-4">
+                            <View key={item.medical_card_id} className="mb-4 border border-gray-200 rounded-xl p-4">
                                 <Text className="font-semibold text-lg">
                                     {item.name} {item.surname}
                                 </Text>
                                 <Text className="text-gray-500 text-sm">
-                                    Medical ID: {item.medicalId}
+                                    ZKK: {item.medical_card_id}
                                 </Text>
                                 <Text className="text-gray-400 text-xs">{item.birthday}</Text>
                             </View>

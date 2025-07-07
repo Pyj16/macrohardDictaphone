@@ -6,9 +6,9 @@ import {
     Pressable,
     ScrollView,
 } from "react-native";
-import {AnamnesisType} from "@/app/types/MedicalTypes";
+import { AnamnesisType } from "@/app/types/MedicalTypes";
 
-export default function AnamnesisOverlay({ visible, onClose, data }:{visible:boolean, onClose:() => void, data:AnamnesisType}) {
+export default function AnamnesisOverlay({ visible, onClose, data, onEdit}: { visible: boolean; onClose: () => void; data: AnamnesisType; onEdit: () => void; }) {
     if (!data) return null;
 
     return (
@@ -28,13 +28,24 @@ export default function AnamnesisOverlay({ visible, onClose, data }:{visible:boo
                         <Text className="text-black text-xl font-bold">×</Text>
                     </Pressable>
 
-                    <Text className="text-xl font-bold mb-2">{data.patient.name} {data.patient.surname}</Text>
-                    <Text className="text-gray-600 mb-1">Doctor: {data.doctor.name} {data.doctor.surname}</Text>
+                    <Text className="text-xl font-bold mb-2">
+                        {data.p_name} {data.p_surname}
+                    </Text>
+                    <Text className="text-gray-600 mb-1">
+                        Doctor: {data.d_name} {data.d_surname}
+                    </Text>
                     <Text className="text-gray-400 text-xs mb-4">{data.date}</Text>
 
                     <ScrollView>
-                        <Text className="text-gray-700 leading-6">{data.content}</Text>
+                        <Text className="text-gray-700 leading-6">{data.contents}</Text>
                     </ScrollView>
+
+                    <Pressable
+                        onPress={onEdit}
+                        className="mt-4 bg-[#00A8E8] py-3 rounded-lg items-center"
+                    >
+                        <Text className="text-white font-semibold">Uredi</Text>
+                    </Pressable>
                 </View>
             </View>
         </Modal>

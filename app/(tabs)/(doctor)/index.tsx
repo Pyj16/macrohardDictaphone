@@ -1,158 +1,320 @@
 import React, { useState, useEffect}from "react";
 import {Text, View, ScrollView, SafeAreaView, TouchableOpacity, Pressable, Modal, Image} from "react-native";
 import PatientOverlay from "@/app/components/PatientsOverlay";
-import {patients, anamnesis, doctors} from "@/app/data/medical-dev-data";
-import {AnamnesisType, DoctorType} from "@/app/types/MedicalTypes";
+import {AnamnesisType, DoctorType, PatientType} from "@/app/types/MedicalTypes";
 import { useRouter } from "expo-router";
+import fakeAuthContext from "@/app/services/fakeAuthContext";
+import SERVER_URL, {public_key} from "@/constants/serverSettings";
+import {RSA} from "react-native-rsa-native";
+import decryptAesGcm from "@/app/services/encryption";
+import AnamnesisEditOverlay from "@/app/components/AnamnesisEditOverlay";
+
+
 export default function DoctorHome() {
 
+	const [showPatients, setShowPatients] = useState<boolean>(false);
+	const [patients, setPatients] = useState<PatientType[]>([]);
+	const [anamnesis, setAnamnesis] = useState<AnamnesisType[]>([]);
 
-    const [showPatients, setShowPatients] = useState<boolean>(false);
-
-
-    //const [anamnesis, setAnamnesis] = useState<tempAnamnesis[]>([]);
-
-    const [loading, setLoading] = useState<boolean>(false);
-    const [selectedAnamnesis, setSelectedAnamnesis] = useState<AnamnesisType>();
-    const [showOverlay, setShowOverlay] = useState<boolean>(false);
-    const router = useRouter();
-
-    const doctor: DoctorType = doctors[0]; // TODO fetch actual authenticated doctor
-
-    const handleAnamnesisPress = (anamnesis: AnamnesisType) => {
-        setSelectedAnamnesis(anamnesis);
-        setShowOverlay(true);
-    };
-    /*
-    useEffect(() => {
-        const fetchAnamnesis = async () => {
-            try {
-                const res = await fetch('http://192.168.1.164:5000/fetch-anamnesis', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        doctorEmail: 'dr.john@example.com', // change as needed
-                    }),
-                });
-
-                if (!res.ok) throw new Error(`HTTP error! ${res.status}`);
-
-                const data = await res.json();
-                console.log(data);
-                setAnamnesis(data.anamnesis); // assuming `data` is an array
-            } catch (err) {
-                console.error('Failed to fetch anamnesis:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchAnamnesis();
-    }, []);
-
-     */
-
-    return (
-        <SafeAreaView className="flex-1 bg-white px-4 pt-10">
-            {/* Header */}
-
-            <PatientOverlay
-                visible={showPatients}
-                onClose={() => setShowPatients(false)}
-                patients={patients}
-            />
-
-            <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-lg">☰</Text>
-                <Text className="text-3xl font-bold text-green-600">＋</Text>
-            </View>
-
-            <Text className="text-gray-500 text-md">welcome back!</Text>
-            <Text className="text-2xl font-bold mb-4">Dr. {doctor.surname}</Text>
-
-            {/* Summary Cards */}
-            <View className="h-28 mb-4">a
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingRight: 8 }}
-                >
-                    <View className="w-28 h-24 bg-purple-500 rounded-xl mr-3 justify-center items-center">
-                        <Text className="text-white font-semibold">Drafts</Text>
-                    </View>
-                    <TouchableOpacity
-                        onPress={() => setShowPatients(true)}
-                        className="w-28 h-24 bg-cyan-500 rounded-xl mr-3 justify-center items-center"
-                    >
-                        <Text className="text-white font-semibold">Patients</Text>
-                    </TouchableOpacity>
-
-                    <View className="w-28 h-24 bg-blue-500 rounded-xl justify-center items-center">
-                        <Text className="text-white font-semibold">Recordings</Text>
-                    </View>
-                </ScrollView>
-            </View>
-            <Text className="text-gray-500 mb-2">Latest anamnesis</Text>
-
-            {!loading && anamnesis.map((item, index) => (
-
-                <Pressable onPress={() => handleAnamnesisPress(item)} key={index}>
-                    <View className="bg-white p-4 rounded-2xl shadow-md mb-2">
-                        <Text className="font-semibold text-base">{item.title}</Text>
-                        <Text className="text-gray-400 text-sm">{item.patient.name} {item.patient.surname}</Text>
-                        <Text className="absolute right-4 top-4 text-gray-400 text-sm">{item.date}</Text>
-                    </View>
-                </Pressable>
-
-            ))}
-
-            <Modal
-                visible={showOverlay}
-                transparent
-                animationType="slide"
-                onRequestClose={() => setShowOverlay(false)}
-            >
-                <View className="flex-1 bg-black/40 justify-center px-6">
-                    <View className="bg-white p-6 rounded-2xl max-h-[90%]">
-                        <View className="flex-row justify-between items-center mb-3">
-                            <Text className="text-lg font-semibold">{selectedAnamnesis?.title}</Text>
-                            <Pressable onPress={() => setShowOverlay(false)}>
-                                <Text className="text-black text-xl">×</Text>
-                            </Pressable>
-                        </View>
-                        <Text className="text-gray-500 text-sm mb-1">
-                            Patient: {selectedAnamnesis?.patient.name} {selectedAnamnesis?.patient.surname}
-                        </Text>
-                        <Text className="text-gray-500 text-sm mb-3">
-                            Doctor: Dr. {selectedAnamnesis?.doctor.name} {selectedAnamnesis?.doctor.surname}
-                        </Text>
-                        <ScrollView>
-                            <Text className="text-gray-700 text-base">{selectedAnamnesis?.content}</Text>
-                        </ScrollView>
-                    </View>
-                </View>
-            </Modal>
+	const [loading, setLoading] = useState<boolean>(true);
+	const [selectedAnamnesis, setSelectedAnamnesis] = useState<AnamnesisType>();
+	const [showOverlay, setShowOverlay] = useState<boolean>(false);
+	const router = useRouter();
+	const [showEditOverlay, setShowEditOverlay] = useState<boolean>(false);
+	const { email, name, surname, id } = fakeAuthContext();
 
 
-            <View className="absolute bottom-8 pb-4 left-0 right-0 items-center">
-                <Pressable
-                    onPress={() => {
-                        console.log("Mic pressed");
-                        router.push("/(tabs)/(doctor)/list-sessions");
-                    }}
-                    className="w-24 h-24 rounded-full items-center justify-center"
-                    style={{ backgroundColor: "#00A8E8" }}
-                >
-                    <Image
-                        source={require("../../assets/images/microphone.png")}
-                        style={{ width: 40, height: 40, tintColor: "#fff" }}
-                        resizeMode="contain"
-                    />
-                </Pressable>
-            </View>
+	const confirmAnamnesis = async () => {
+		setLoading(true);
+		let response = await fetch(`${SERVER_URL}/finalize-anamnesis`, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				anamnesis_id: selectedAnamnesis!.id_anamnesis,
+				content: selectedAnamnesis!.contents,
+				diagnosis: selectedAnamnesis!.diagnosis,
+				mkb10: selectedAnamnesis!.mkb10,
+				doctor_id: id,
+				patient_id: selectedAnamnesis!.id_patient
+			})
 
-        </SafeAreaView>
-    );
+		})
+		let data  = await response.json();
+		if (data.success) {
+			console.log("Data updated successfully");
+		}
+
+
+
+		/* TODO actually secure this
+		const array = new Uint8Array(32);
+		crypto.getRandomValues(array);
+		const aesKeyBase64 = Buffer.from(array).toString('base64');
+
+		let key = await RSA.encrypt(aesKeyBase64, public_key);
+
+		 */
+
+
+
+	}
+
+
+	const dateFormat = (dateString: string) => {
+		const weekdays = ["ned", "pon", "tor", "sre", "čet", "pet", "sob"];
+		const months = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "avg", "sep", "okt", "nov", "dec"];
+		const date = new Date(dateString);
+
+		// Get parts
+		const weekday = weekdays[date.getDay()];
+		const day = date.getDate();
+		const month = months[date.getMonth()];
+		const year = date.getFullYear();
+
+		return `${weekday}, ${day}. ${month} ${year}`;
+	}
+
+	//
+	const handleAnamnesisPress = (anamnesis: AnamnesisType) => {
+		setSelectedAnamnesis(anamnesis);
+		setShowOverlay(true);
+	};
+
+	let close  = () => {
+		setShowEditOverlay(false)
+	}
+
+	const handleShowEditOverlay = () => {
+		setShowOverlay(false);
+		setShowEditOverlay(true);
+	}
+
+	// Border color of anamnesis depending on status
+	let statusColor = (status: string) => {
+		switch (status) {
+			case 'CONFIRMED':
+				return "#03fc62"
+			case 'PENDING':
+				return "#f2e441"
+			default:
+				return "#666565"
+		}
+	}
+
+	// Background color with opacity of anamnesis depending on status
+	const hexToRgba = (hex: string, alpha: number) => {
+		let r = 0, g = 0, b = 0;
+
+		if (hex.length === 4) {
+			r = parseInt(hex[1] + hex[1], 16);
+			g = parseInt(hex[2] + hex[2], 16);
+			b = parseInt(hex[3] + hex[3], 16);
+		} else if (hex.length === 7) {
+			r = parseInt(hex[1] + hex[2], 16);
+			g = parseInt(hex[3] + hex[4], 16);
+			b = parseInt(hex[5] + hex[6], 16);
+		}
+
+		return `rgba(${r},${g},${b},${alpha})`;
+	};
+
+
+	useEffect(() => {
+		const fetchPatients = async () => {
+			try{
+				setLoading(true);
+				const response = await fetch(`${SERVER_URL}/fetch-patients`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						doctor_email: email
+					})
+				});
+				const rawText = await response.text();
+				let data:any;
+				try {
+					data = JSON.parse(rawText);
+				}catch (error) {
+					console.log("Failed to parse the response", error);
+					return;
+				}
+				setPatients(data.patients);
+
+			}
+			catch (e){
+				console.log("Failed to parse the response (outer)", e);
+			}
+
+		}
+		const fetchAnamnesis = async () => {
+			try {
+				setLoading(true);
+				const keypair = await RSA.generateKeys(2048)
+				const publicKey = keypair.public;
+				const response = await fetch(`${SERVER_URL}/fetch-anamnesis`, {
+					method: 'POST',
+					headers: {
+						Accept: 'application/json',
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({public_key: publicKey, doctor_email: email}),
+
+				})
+				const rawText = await response.text();
+				let data: any;
+				try {
+					data = JSON.parse(rawText);
+				} catch (error) {
+					console.error("Failed to parse response", error);
+					return;
+				}
+				if (!data || !Array.isArray(data.anamnesis)) {
+					console.error("Unexpected structure", data);
+				}
+
+				const dcKey = await RSA.decrypt64(data.encrypted_key, keypair.private);
+
+				for (let i=0; i<data.anamnesis.length; i++){
+					data.anamnesis[i].contents = await decryptAesGcm(data.anamnesis[i].contents, dcKey);
+					data.anamnesis[i].diagnosis = await decryptAesGcm(data.anamnesis[i].diagnosis, dcKey)
+				}
+
+				setAnamnesis(data.anamnesis)
+				setLoading(false);
+
+			} catch (e) {
+				console.error("Failed to parse response", e);
+			}
+		}
+		fetchPatients().then(()=> {fetchAnamnesis()})
+	}, []);
+
+
+
+
+	return (
+		<SafeAreaView className="flex-1 bg-white px-4 pt-10">
+
+			<PatientOverlay
+				visible={showPatients}
+				onClose={() => setShowPatients(false)}
+				patients={patients}
+			/>
+
+
+			<Text className="text-gray-500 text-md">welcome back!</Text>
+			<Text className="text-2xl font-bold mb-4">Dr. {surname}</Text>
+
+			<View className="h-28 mb-4">
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					contentContainerStyle={{ paddingRight: 8 }}
+				>
+					<View className="w-28 h-24 bg-purple-500 rounded-xl mr-3 justify-center items-center">
+						<Text className="text-white font-semibold">Drafts</Text>
+					</View>
+					<TouchableOpacity
+						onPress={() => setShowPatients(true)}
+						className="w-28 h-24 bg-cyan-500 rounded-xl mr-3 justify-center items-center"
+					>
+						<Text className="text-white font-semibold">Pacienti</Text>
+					</TouchableOpacity>
+
+					<View className="w-28 h-24 bg-blue-500 rounded-xl justify-center items-center">
+						<Text className="text-white font-semibold">Posnetki</Text>
+					</View>
+				</ScrollView>
+			</View>
+			<Text className="text-gray-500 mb-2">Zadnje anamneze</Text>
+
+			{!loading && anamnesis.map((item, index) => {
+				const borderColor = statusColor(item.status);
+				const backgroundColor = hexToRgba(borderColor, 0.10);
+				return (
+					<Pressable onPress={() => handleAnamnesisPress(item)} key={index}>
+						<View
+							className={`border p-4 rounded-2xl mb-2`}
+							style={{
+								borderColor: borderColor,
+								backgroundColor: backgroundColor,
+							}}>
+							<Text className="font-semibold text-base">{item.title}</Text>
+							<Text className="text-gray-700 text-sm">{item.p_name} {item.p_surname}</Text>
+							<Text className="absolute right-4 top-4 text-gray-700 text-sm">{dateFormat(item.date)}</Text>
+						</View>
+					</Pressable>
+				);
+			})}
+
+
+			<Modal
+				visible={showOverlay}
+				transparent
+				animationType="slide"
+				onRequestClose={() => setShowOverlay(false)}
+			>
+				<View className="flex-1 bg-black/40 justify-center px-6">
+					<View className="bg-white p-6 rounded-2xl max-h-[90%]">
+						<View className="flex-row justify-between items-center mb-3">
+							<Text className="text-lg font-semibold">{selectedAnamnesis?.title}</Text>
+							<Pressable onPress={() => setShowOverlay(false)}>
+								<Text className="text-black text-2xl">×</Text>
+							</Pressable>
+						</View>
+						<Text className="text-gray-500 text-sm mb-1">
+							Pacient: {selectedAnamnesis?.p_name} {selectedAnamnesis?.p_surname}
+						</Text>
+						<Text className="text-gray-500 text-sm mb-3">
+							Zdravnik: Dr. {name} {surname}
+						</Text>
+						<ScrollView>
+							<Text className="text-gray-700 text-base">{selectedAnamnesis?.contents}</Text>
+						</ScrollView>
+
+						{
+							selectedAnamnesis?.status !== "CONFIRMED" && (
+								<TouchableOpacity className={` rounded-lg items-center justify-center mt-4 h-[40px]
+								${selectedAnamnesis?.status==="UNPROCESSED" ? "bg-gray-500": "bg-[#00A8E8]"}
+								`}
+												  onPress={() => handleShowEditOverlay()}
+												  disabled={selectedAnamnesis?.status==="UNPROCESSED"}
+								>
+									<Text className={`text-lg text-white `}>Uredi in potrdi</Text>
+								</TouchableOpacity>
+							)
+						}
+
+
+					</View>
+				</View>
+			</Modal>
+			{ showEditOverlay && selectedAnamnesis?.status === "pending" && (
+				<View className="h-full">
+					<AnamnesisEditOverlay visible={true} onClose={close} data={selectedAnamnesis!} onSave={setSelectedAnamnesis}/>
+				</View>
+			)}
+
+			<View className="absolute bottom-8 pb-4 left-0 right-0 items-center">
+				<Pressable
+					onPress={() => {
+						router.push("/(tabs)/(doctor)/list-sessions");
+					}}
+					className="w-24 h-24 rounded-full items-center justify-center"
+					style={{ backgroundColor: "#00A8E8" }}
+				>
+					<Image
+						source={require("../../assets/images/microphone.png")}
+						style={{ width: 40, height: 40, tintColor: "#fff" }}
+						resizeMode="contain"
+					/>
+				</Pressable>
+			</View>
+
+		</SafeAreaView>
+	);
 }

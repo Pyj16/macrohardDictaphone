@@ -43,7 +43,7 @@ const SessionScreen = () => {
         const sessionName = `session-${session.sessionId}`;
         const sessionsFolder = FileSystem.documentDirectory + 'sessions/';
         const sessionPath = sessionsFolder + sessionName;
-
+        console.log(sessionPath);
         await FileSystem.makeDirectoryAsync(sessionsFolder, { intermediates: true });
         const data = JSON.stringify(session);
         await FileSystem.writeAsStringAsync(sessionPath, data);
@@ -61,9 +61,9 @@ const SessionScreen = () => {
     return (
         <View className="p-5 bg-white min-h-full">
             {/* Title */}
-            <Text className="text-2xl font-bold text-center mt-8 text-black">New Session</Text>
+            <Text className="text-2xl font-bold text-center mt-8 text-black">Nova seja</Text>
 
-            <Text className="mt-6 text-black">Name of Document</Text>
+            <Text className="mt-6 text-black">Tip dokumenta</Text>
             <TextInput
                 value={documentName}
                 onChangeText={setDocumentName}
@@ -83,7 +83,7 @@ const SessionScreen = () => {
                     }}
                     style={{ color: 'black' }}
                 >
-                    <Picker.Item label="Select a patient" value="" />
+                    <Picker.Item label="Izberite pacienta" value="" />
                     {patients.map((p) => (
                         <Picker.Item key={p.id} label={`${p.name} ${p.surname}`} value={p.id} />
                     ))}
@@ -91,7 +91,7 @@ const SessionScreen = () => {
             </View>
 
             {/* Date */}
-            <Text className="mt-6 text-black">Date of Visit</Text>
+            <Text className="mt-6 text-black">Datum obiska</Text>
             <View className="border rounded-xl px-4 py-3 mt-2 bg-white">
                 <Text className="text-black">{formattedDate}</Text>
             </View>
@@ -106,7 +106,7 @@ const SessionScreen = () => {
                     isPressed ? 'bg-[#003459]' : 'bg-transparent'
                 }`}
             >
-                <Text className={`${isPressed ? 'text-white' : 'text-black'}`}>Save</Text>
+                <Text className={`${isPressed ? 'text-white' : 'text-black'}`}>Shrani</Text>
             </Pressable>
         </View>
     );

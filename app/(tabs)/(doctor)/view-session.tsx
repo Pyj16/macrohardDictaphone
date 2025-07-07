@@ -24,25 +24,28 @@ export default function ViewSessionScreen() {
     }, [sessionId]);
 
     if (!sessionData) {
-        return <Text className="p-4">Loading session...</Text>;
+        return <Text className="p-4">Nalaganje seje...</Text>;
     }
 
     return (
-        <View className="p-5">
-            <Text className="text-xl font-bold mb-4">{sessionData.title}</Text>
-            <Text>Patient: {sessionData.patientName} {sessionData.patientSurname}</Text>
-            <Text>Date: {new Date(sessionData.creationTime).toLocaleDateString()}</Text>
-            <Text className="mt-4">Session ID: {sessionData.sessionId}</Text>
+        <View className="p-5 bg-white w-full h-full">
+            <View className="mx-4 my-6">
+                <Text className="text-3xl font-bold mb-4 mt-8">{sessionData.title}</Text>
+                <Text>Pacient: {sessionData.patientName} {sessionData.patientSurname}</Text>
+                <Text>Datum: {new Date(sessionData.creationTime).toLocaleDateString()}</Text>
+                <Text className="">ID seje: {sessionData.sessionId}</Text>
 
-            <TouchableOpacity
-                onPress={() => router.push({
-                    pathname: "/recordings",
-                    params: { sessionId: sessionData.sessionId },
-                })}
-                className="bg-blue-600 mt-8 py-3 rounded-xl items-center"
-            >
-                <Text className="text-white font-semibold text-lg">Record</Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => router.push({
+                        pathname: "/recordings",
+                        params: { sessionId: sessionData.sessionId },
+                    })}
+                    className="bg-blue-600 mt-8 py-3 rounded-xl items-center"
+                >
+                    <Text className="text-white font-semibold text-lg">Snemaj</Text>
+                </TouchableOpacity>
+            </View>
+
         </View>
     );
 }

@@ -7,11 +7,12 @@ type Props = {
     play: (i: number) => void;
     pause: () => void;
     deleteAt: (i: number) => void;
+    isPlaying: boolean;
 };
 
-export default function RecordingList({ recordings, playingAt, play, pause, deleteAt }: Props) {
+export default function RecordingList({ recordings, playingAt, play, pause, deleteAt, isPlaying }: Props) {
     if (recordings.length === 0) {
-        return <Text className="text-base text-gray-500 text-center mt-10">No recordings</Text>;
+        return <Text className="text-base text-gray-500 text-center mt-10">Seznam posnetkov je prazen</Text>;
     }
 
     return (
@@ -20,7 +21,7 @@ export default function RecordingList({ recordings, playingAt, play, pause, dele
                 <RecordingRow
                     key={i}
                     index={i}
-                    isPlaying={i === playingAt}
+                    isPlaying={i === playingAt && isPlaying}
                     onPlay={() => play(i)}
                     onPause={pause}
                     onDelete={() => deleteAt(i)}

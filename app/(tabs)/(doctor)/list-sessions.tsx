@@ -30,9 +30,9 @@ export default function ListSessionsScreen() {
     return (
         <View className="flex-1 bg-white">
             <ScrollView className="p-5">
-                <Text className="text-2xl font-bold mb-8 mt-16 text-center">All Sessions</Text>
+                <Text className="text-2xl font-bold mb-8 mt-16 text-center">Seznam sej</Text>
                 {sessions.length === 0 ? (
-                    <Text className="text-center text-gray-500">No sessions found.</Text>
+                    <Text className="text-center text-gray-500">Seznam sej je prazen.</Text>
                 ) : (
                     sessions.map((filename, idx) => {
                         const sessionId = filename.replace("session-", "");
