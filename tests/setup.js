@@ -1,5 +1,14 @@
 import '@testing-library/jest-native/extend-expect';
 
+jest.mock('nativewind/jsx-runtime', () => ({
+    jsx: (type, props) => ({ type, props }),
+    jsxs: (type, props) => ({ type, props }),
+}), { virtual: true });
+
+jest.mock('nativewind', () => ({
+    styled: (component) => component,
+}), { virtual: true });
+
 // Mock React Native modules
 jest.mock('react-native/Libraries/EventEmitter/NativeEventEmitter');
 
@@ -29,6 +38,11 @@ jest.mock('expo-audio', () => ({
     RecordingPresets: {
         HIGH_QUALITY: {},
     },
+    AudioModule: {
+        requestRecordingPermissionsAsync: jest.fn(() =>
+            Promise.resolve({ granted: true })
+        )
+    }
 }));
 
 // Mock Google Sign In
@@ -43,3 +57,25 @@ jest.mock('@react-navigation/native', () => ({
         params: { sessionId: 1337 }
     }),
 }));
+
+// Mock React Native Reanimated
+jest.mock('react-native-reanimated', () => ({
+    default: {
+        View: 'View',
+        Text: 'Text',
+        ScrollView: 'ScrollView',
+        FlatList: 'FlatList',
+        Image: 'Image',
+        createAnimatedComponent: (component) => component,
+    },
+    interpolate: jest.fn(),
+    useAnimatedRef: jest.fn(),
+    useAnimatedStyle: jest.fn(() => ({})),
+    useScrollViewOffset: jest.fn(),
+    runOnJS: jest.fn(),
+    withSpring: jest.fn(),
+    withTiming: jest.fn(),
+}));
+
+// Mock the global CSS import
+jest.mock('@/global.css', () => ({}));

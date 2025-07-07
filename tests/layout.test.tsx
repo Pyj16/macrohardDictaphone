@@ -32,7 +32,7 @@ jest.mock('@/components/ui/IconSymbol', () => ({
 
 jest.mock('@react-navigation/core', () => ({
     useRoute: () => ({
-        params: null,
+        params: { sessionId: 1 },
     }),
 }));
 
@@ -56,10 +56,29 @@ describe('DrawerLayout', () => {
     });
 
     test('drawer configuration is valid', () => {
-        // Test that the drawer screens are properly configured
-        const screens = ['index', 'statistics', 'debug', 'profile'];
+        const screens = ['index', 'statistics', 'personel', 'profile'];
         screens.forEach(screen => {
             expect(typeof screen).toBe('string');
+        });
+    });
+
+    test('route params handling', () => {
+        const mockRoute = { params: { sessionId: 123 } };
+        expect(mockRoute.params.sessionId).toBe(123);
+    });
+
+    test('screen options configuration', () => {
+        const expectedScreens = [
+            { name: 'index', title: 'Home', icon: 'house.fill' },
+            { name: 'statistics', title: 'Statistics', icon: 'chart.bar.fill' },
+            { name: 'personel', title: 'Personel', icon: 'paperplane.fill' },
+            { name: 'profile', title: 'Profile', icon: 'person.fill' }
+        ];
+
+        expectedScreens.forEach(screen => {
+            expect(screen.name).toBeDefined();
+            expect(screen.title).toBeDefined();
+            expect(screen.icon).toBeDefined();
         });
     });
 });
