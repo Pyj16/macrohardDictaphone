@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { AnamnesisType } from "@/app/types/MedicalTypes";
 
-export default function AnamnesisEditOverlay({ visible, onClose, data, onSave }: { visible: boolean; onClose: () => void; data: AnamnesisType; onSave: (updated: AnamnesisType) => void; }) {
+export default function AnamnesisEditOverlay({ visible, onClose, data, onSave,  isAdmin = false }: { visible: boolean; onClose: () => void; data: AnamnesisType; onSave: (updated: AnamnesisType) => void; isAdmin: boolean }) {
 	const [diagnosis, setDiagnosis] = useState(data.diagnosis);
 	const [mkb10, setMkb10] = useState(data.mkb10);
 	const [contents, setContents] = useState(data.contents);
@@ -48,15 +48,19 @@ export default function AnamnesisEditOverlay({ visible, onClose, data, onSave }:
 						<TextInput
 							placeholder="Diagnoza"
 							value={diagnosis}
+							editable={!isAdmin}
 							onChangeText={setDiagnosis}
-							className="border border-gray-300 rounded-lg px-3 py-2 mb-3"
+							className={`border border-gray-300 rounded-lg px-3 py-2 mb-3
+								${isAdmin ? "bg-gray-400" : "bg-white"}`}
 						/>
 
 						<TextInput
 							placeholder="MKB-10"
 							value={mkb10}
+							editable={!isAdmin}
 							onChangeText={setMkb10}
-							className="border border-gray-300 rounded-lg px-3 py-2 mb-3"
+							className={`border border-gray-300 rounded-lg px-3 py-2 mb-3
+								${isAdmin ? "bg-gray-400" : "bg-white"}`}
 						/>
 
 						<TextInput

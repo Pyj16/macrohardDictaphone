@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { AnamnesisType } from "@/app/types/MedicalTypes";
 
-export default function AnamnesisOverlay({ visible, onClose, data, onEdit}: { visible: boolean; onClose: () => void; data: AnamnesisType; onEdit: () => void; }) {
+export default function AnamnesisOverlay({ visible, onClose, data, onEdit, }: { visible: boolean; onClose: () => void; data: AnamnesisType; onEdit: () => void;  }) {
     if (!data) return null;
 
     return (

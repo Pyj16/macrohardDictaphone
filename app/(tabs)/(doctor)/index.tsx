@@ -295,7 +295,7 @@ export default function DoctorHome() {
 			</Modal>
 			{ showEditOverlay && selectedAnamnesis?.status === "pending" && (
 				<View className="h-full">
-					<AnamnesisEditOverlay visible={true} onClose={close} data={selectedAnamnesis!} onSave={setSelectedAnamnesis}/>
+					<AnamnesisEditOverlay visible={true} onClose={close} data={selectedAnamnesis!} onSave={setSelectedAnamnesis} isAdmin={false}/>
 				</View>
 			)}
 
