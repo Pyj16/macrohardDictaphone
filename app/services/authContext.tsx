@@ -1,59 +1,55 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+// services/authContext.tsx
+import React, {
+  createContext,
+  ReactNode,
+  useContext,
+  useState,
+  useEffect,
+} from 'react';
 
-interface AuthContextType {
-  userInfo: any;
-  jwt: string | null;
-  signIn: () => Promise<void>;
-  signOut: () => Promise<void>;
-  restoreSession: () => Promise<void>;
-  loading: boolean;
+export interface AuthContextType {
+  id:      string;
+  name:    string;
+  surname: string;
+  email:   string;
+  role:    string;
+  token:   string;
+  setId:      React.Dispatch<React.SetStateAction<string>>;
+  setName:    React.Dispatch<React.SetStateAction<string>>;
+  setSurname: React.Dispatch<React.SetStateAction<string>>;
+  setEmail:   React.Dispatch<React.SetStateAction<string>>;
+  setRole:    React.Dispatch<React.SetStateAction<string>>;
+  setToken:   React.Dispatch<React.SetStateAction<string>>;
+  signOut:    () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used inside an AuthProvider');
-  return context;
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [id,      setId]      = useState<string>('');
+  const [name,    setName]    = useState<string>('');
+  const [surname, setSurname] = useState<string>('');
+  const [email,   setEmail]   = useState<string>('');
+  const [role,    setRole]    = useState<string>('');
+  const [token,   setToken]   = useState<string>('');
+
+  const signOut = () => {
+    setId(''); setName(''); setSurname(''); setEmail(''); setRole(''); setToken('');
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{ id, name, surname, email, role, token,
+               setId, setName, setSurname, setEmail, setRole, setToken,
+               signOut }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [userInfo, setUserInfo] = useState<any>(null);
-  const [jwt, setJwt] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const signIn = async () => {
-    // Placeholder for Microsoft Sign-In
-    console.log('SignIn called - Replace with Microsoft Auth');
-  };
-
-  const signOut = async () => {
-    console.log('SignOut called');
-    setUserInfo(null);
-    setJwt(null);
-    await AsyncStorage.removeItem('accessToken');
-  };
-
-  const restoreSession = async () => {
-    console.log('restoreSession called - No Google sign-in logic');
-    const token = await AsyncStorage.getItem('accessToken');
-    if (token) {
-      setJwt(token);
-      // Optionally: decode or fetch user info here
-      setUserInfo({ name: 'Test User', role: 'doctor', email: 'user@example.com' }); // ← dummy data for now
-    }
-    setLoading(false);
-  };
-  /*
-  useEffect(() => {
-    restoreSession();
-  }, []);
-
-   */
-  return (
-      <AuthContext.Provider value={{ userInfo, jwt, signIn, signOut, restoreSession, loading }}>
-        {children}
-      </AuthContext.Provider>
-  );
+export const useAuth = (): AuthContextType => {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within <AuthProvider>');
+  return ctx;
 };

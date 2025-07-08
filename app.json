@@ -9,6 +9,8 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "extra": {
+      "tenantId": "67652474-eba6-4a6b-bbcb-5013864b11f4",
+      "clientId": "c0a4b7bd-5e2e-48d3-a959-54816b1a512e",
       "eas": {
         "projectId": "176b3c31-4e20-4280-b698-abd14b72a59a"
       }

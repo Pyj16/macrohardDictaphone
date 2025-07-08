@@ -10,7 +10,7 @@ import * as FileSystem from "expo-file-system";
 import { useAudioPlayer } from "expo-audio";
 import { sha256 } from "react-native-sha256";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
-import { useAuth } from "./services/authContext"; // adjust path if needed
+//import { useAuth } from "./services/authContext"; // adjust path if needed
 import {Platform } from "react-native";
 
 type RecordingSession = {

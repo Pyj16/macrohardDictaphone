@@ -3,7 +3,8 @@ import {Text, View, ScrollView, SafeAreaView, TouchableOpacity, Pressable, Modal
 import PatientOverlay from "@/app/components/PatientsOverlay";
 import {AnamnesisType, DoctorType, PatientType} from "@/app/types/MedicalTypes";
 import { useRouter } from "expo-router";
-import fakeAuthContext from "@/app/services/fakeAuthContext";
+//import fakeAuthContext from "@/app/services/fakeAuthContext";
+import { useAuth } from '../../services/authContext';
 import SERVER_URL, {public_key} from "@/constants/serverSettings";
 import {RSA} from "react-native-rsa-native";
 import decryptAesGcm from "@/app/services/encryption";
@@ -21,7 +22,7 @@ export default function DoctorHome() {
 	const [showOverlay, setShowOverlay] = useState<boolean>(false);
 	const router = useRouter();
 	const [showEditOverlay, setShowEditOverlay] = useState<boolean>(false);
-	const { email, name, surname, id } = fakeAuthContext();
+	const { email, name, surname, id } = useAuth(); //const { email, name, surname, id } = fakeAuthContext();
 
 
 	const confirmAnamnesis = async () => {

@@ -4,8 +4,9 @@ import decryptAesGcm from "@/app/services/encryption";
 import {Modal, Pressable, SafeAreaView, ScrollView, Text, View} from "react-native";
 import React, {useEffect, useState} from "react";
 import {AnamnesisType} from "@/app/types/MedicalTypes";
-import useFakeAuthContext from "@/app/services/fakeAuthContext";
+//import useFakeAuthContext from "@/app/services/fakeAuthContext";
 import AnamnesisEditOverlay from "@/app/components/AnamnesisEditOverlay";
+import { useAuth } from '../../services/authContext';
 
 export default function AdminIndex(){
 	const [anamnesis, setAnamnesis] = useState<AnamnesisType[]>([]);
@@ -14,7 +15,7 @@ export default function AdminIndex(){
 	const [selectedAnamnesis, setSelectedAnamnesis] = useState<AnamnesisType>();
 	const [showOverlay, setShowOverlay] = useState<boolean>(false);
 	const [showEditOverlay, setShowEditOverlay] = useState<boolean>(false);
-	const {name, surname, email} = useFakeAuthContext();
+	const {name, surname, email} = useAuth(); // const {name, surname, email} = useFakeAuthContext();
 	const close = () => {
 		setShowEditOverlay(false);
 	}

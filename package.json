@@ -36,7 +36,7 @@
     "buffer": "^6.0.3",
     "expo": "53.0.13",
     "expo-audio": "~0.4.5",
-    "expo-auth-session": "~6.2.0",
+    "expo-auth-session": "~6.2.1",
     "expo-blur": "~14.1.5",
     "expo-constants": "~17.1.6",
     "expo-dev-client": "~5.2.2",
@@ -45,6 +45,7 @@
     "expo-haptics": "~14.1.4",
     "expo-image": "~2.3.0",
     "expo-linking": "~7.1.4",
+    "expo-random": "^14.0.1",
     "expo-router": "~5.1.1",
     "expo-splash-screen": "~0.30.9",
     "expo-status-bar": "~2.2.3",
@@ -91,7 +92,8 @@
     "setupFilesAfterEnv": [
       "<rootDir>/tests/setup.js"
     ],
-    "transformIgnorePatterns": ["node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
+    "transformIgnorePatterns": [
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?)|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg)"
     ],
     "testEnvironment": "node",
     "collectCoverageFrom": [

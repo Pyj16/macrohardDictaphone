@@ -11,7 +11,8 @@ import RecordingOverlay from "@/app/components/Recordings/RecordingOverlay";
 import SERVER_URL, {public_key} from "@/constants/serverSettings";
 import { RSA } from 'react-native-rsa-native';
 import AesGcmCrypto from "react-native-aes-gcm-crypto";
-import useFakeAuthContext from "@/app/services/fakeAuthContext";
+//import useFakeAuthContext from "@/app/services/fakeAuthContext";
+import { useAuth } from '../../services/authContext';
 
 
 type RecordingSession = {
@@ -26,7 +27,7 @@ type RecordingSession = {
 
 export default function Recordings() {
     const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
-    const { id } = useFakeAuthContext();
+    const { id } = useAuth(); // useFakeAuthContext();
     useEffect(() => {
         (async () => {
             const status = await AudioModule.requestRecordingPermissionsAsync();
