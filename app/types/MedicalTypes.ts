@@ -1,6 +1,6 @@
 export interface PatientType {
-    id: number;
-    medicalId: string;
+    patient_id: number;
+    medical_card_id: string;
     name: string;
     surname: string;
     birthday: string;
@@ -21,13 +21,19 @@ export interface DoctorType {
 }
 
 
-
 export interface AnamnesisType {
-    id: number;
+    id?: number;
     title: string;
-    content: string;
-    patient: PatientType;
-    doctor: DoctorType;
+    contents: string;
+    diagnosis: string;
+    mkb10: string;
+    p_name: string;
+    p_surname: string;
+    d_name:string;
+    d_surname: string;
+    id_patient: number;
+    id_anamnesis: number;
     date: string;
+    status: string;
 }
 

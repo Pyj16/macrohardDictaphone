@@ -87,8 +87,8 @@ export default function DoctorHome() {
 	}
 
 	const handleShowEditOverlay = () => {
-		setShowOverlay(false);
 		setShowEditOverlay(true);
+		setShowOverlay(false);
 	}
 
 	// Border color of anamnesis depending on status
@@ -293,7 +293,7 @@ export default function DoctorHome() {
 					</View>
 				</View>
 			</Modal>
-			{ showEditOverlay && selectedAnamnesis?.status === "pending" && (
+			{ showEditOverlay && selectedAnamnesis?.status === "PENDING" && (
 				<View className="h-full">
 					<AnamnesisEditOverlay visible={true} onClose={close} data={selectedAnamnesis!} onSave={setSelectedAnamnesis} isAdmin={false}/>
 				</View>

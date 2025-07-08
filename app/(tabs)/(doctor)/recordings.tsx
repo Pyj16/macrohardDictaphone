@@ -3,7 +3,7 @@ import {View, Text, Pressable, Alert} from "react-native";
 import * as FileSystem from "expo-file-system";
 import RNFS from 'react-native-fs';
 
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import {AudioModule, AudioQuality, IOSOutputFormat, useAudioPlayer, useAudioRecorder} from "expo-audio";
 import UploadButton from "@/app/components/Recordings/UploadButton";
 import RecordingList from "@/app/components/Recordings/RecordingList";
@@ -11,6 +11,7 @@ import RecordingOverlay from "@/app/components/Recordings/RecordingOverlay";
 import SERVER_URL, {public_key} from "@/constants/serverSettings";
 import { RSA } from 'react-native-rsa-native';
 import AesGcmCrypto from "react-native-aes-gcm-crypto";
+import useFakeAuthContext from "@/app/services/fakeAuthContext";
 
 
 type RecordingSession = {
@@ -25,8 +26,7 @@ type RecordingSession = {
 
 export default function Recordings() {
     const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
-    const router = useRouter();
-
+    const { id } = useFakeAuthContext();
     useEffect(() => {
         (async () => {
             const status = await AudioModule.requestRecordingPermissionsAsync();
@@ -81,7 +81,6 @@ export default function Recordings() {
 
     useEffect(() => {
         if (!player.currentStatus.playing && isPlaying) {
-            // Playback just finiashed naturally
             console.log("Playback finished!");
 
             setPlayingAt(-1);
@@ -205,28 +204,6 @@ export default function Recordings() {
         };
     }
 
-    const encryptAudio = async (uri:string, key:string, idx:number) => {
-        const fileBase64 = await RNFS.readFile(uri, 'base64');
-
-        let result = await AesGcmCrypto.encrypt(fileBase64, true, key);
-        const ivBytes = Buffer.from(result.iv, 'hex');
-        const contentBytes = Buffer.from(result.content, 'base64');
-        const tagBytes = Buffer.from(result.tag, 'hex');
-        const combined = Buffer.concat([ivBytes, contentBytes, tagBytes]);
-
-
-        const newUri = `${RNFS.DocumentDirectoryPath}/recording-${idx + 1}.bin`;
-
-        await RNFS.writeFile(newUri, combined.toString(), 'base64');
-
-        return {
-            uri: 'file://' + newUri,
-            name: `recording-${idx + 1}.bin`,
-            type: 'application/octet-stream',
-        };
-
-    }
-
     const handleUpload = async () => {
         console.log(recordingSession);
         if (!recordingSession || !recordingSession.recordings.length) {
@@ -248,8 +225,7 @@ export default function Recordings() {
         try {
             recordingSession.recordings.map(async (uri, i) => {
                 setStatusText(uri)
-                //const file = parseUriFile(uri, i);
-                const file = await encryptAudio(uri, aesKeyBase64, i);
+               const file = parseUriFile(uri, i);
                 form.append("audio_files", file as any);
             });
         } catch (e) {
@@ -258,16 +234,9 @@ export default function Recordings() {
             return;
         }
 
-        form.append("id_", recordingSession.patientId.toString());
+        form.append("patient_id", recordingSession.patientId.toString());
         form.append("title", recordingSession.title);
-        form.append("encrypted_key", key)
-
-
-
-
-
-
-
+        form.append("doctor_id", id.toString())
 
         setStatusText("Pošiljanje seje…");
         try {
@@ -282,6 +251,11 @@ export default function Recordings() {
                 }
             );
 
+            if (!response.ok) {
+                setStatusText( `Prišlo je do napake (err. ${response.status})`);
+                return;
+            }
+
             const text = await response.text();
             try {
                 const json = JSON.parse(text);
@@ -292,8 +266,8 @@ export default function Recordings() {
         } catch (e) {
             console.error("Network error:", e);
             setStatusText("Upload failed");
+            return;
         }
-
 
     };
 
