@@ -56,7 +56,7 @@ export default function Recordings() {
 
     const player = useAudioPlayer();
     const audioRecorder = useAudioRecorder({
-            extension: '.wav',
+            extension: '.mpeg4',
             sampleRate: 44100,
             numberOfChannels: 2,
             bitRate: 128000,
@@ -195,12 +195,12 @@ export default function Recordings() {
 
     function parseUriFile(uri: string, index: number): { name: string; type: string; uri: string } {
 
-        const normalizedUri = uri.endsWith('.wav') ? uri : uri + '.wav';
+        const normalizedUri = uri.endsWith('.mp3') ? uri : uri + '.mp3';
         console.log(uri, normalizedUri);
         return {
             uri: normalizedUri,
-            name: `segment-${index + 1}.wav`,
-            type: 'audio/wav',
+            name: `segment-${index + 1}.mpeg4`,
+            type: 'audio/mpeg4',
         };
     }
 
@@ -210,12 +210,12 @@ export default function Recordings() {
             setStatusText("Ni posnetkov");
             return;
         }
-
-        const array = new Uint8Array(32);
-        crypto.getRandomValues(array);
-        const aesKeyBase64 = Buffer.from(array).toString('base64');
-
-        let key = await RSA.encrypt(aesKeyBase64, public_key);
+        //
+        // const array = new Uint8Array(32);
+        // crypto.getRandomValues(array);
+        // const aesKeyBase64 = Buffer.from(array).toString('base64');
+        //
+        // let key = await RSA.encrypt(aesKeyBase64, public_key);
 
 
         const form = new FormData();
@@ -251,10 +251,7 @@ export default function Recordings() {
                 }
             );
 
-            if (!response.ok) {
-                setStatusText( `Prišlo je do napake (err. ${response.status})`);
-                return;
-            }
+           console.log(response);
 
             const text = await response.text();
             try {
