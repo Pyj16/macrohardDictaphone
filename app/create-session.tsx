@@ -12,7 +12,7 @@ import { StorageAccessFramework } from 'expo-file-system';
 import React from "react";
 
 import { Picker } from '@react-native-picker/picker';
-import { AuthProvider, useAuth } from './services/authContext';
+//import { AuthProvider, useAuth } from './services/authContext';
 
 const dummyPatients=[
     {

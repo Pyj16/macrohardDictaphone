@@ -1,6 +1,8 @@
 // app/_layout.tsx
 import React, {useEffect, useState} from "react";
 import { usePathname, Redirect, Slot, useRouter } from "expo-router";
+import { AuthProvider } from './services/authContext';
+
 // import { role } from authContext<
 /*
 import React from "react";
@@ -69,7 +71,7 @@ function RootNavigation() {
 	*/
 
 export default function RootLayout() {
-    return <RootNavigation />;
+    return (<AuthProvider> <RootNavigation /> </AuthProvider>);
 }
 
 import { useColorScheme } from 'react-native';
@@ -92,7 +94,7 @@ function RootNavigation() {
         if (isReady) {
             //1if (role === 'doctor'){
             if (isReady)
-                router.replace('/(tabs)/(doctor)');
+                router.replace('/(auth)/login');
             }
         }, [isReady]);
 
