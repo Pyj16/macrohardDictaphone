@@ -9,7 +9,7 @@ import SERVER_URL, {public_key} from "@/constants/serverSettings";
 import {RSA} from "react-native-rsa-native";
 import decryptAesGcm from "@/app/services/encryption";
 import AnamnesisEditOverlay from "@/app/components/AnamnesisEditOverlay";
-
+import {createPDF} from '@/app/services/pdfGenetaion'
 
 export default function DoctorHome() {
 
@@ -197,6 +197,26 @@ export default function DoctorHome() {
 
 
 
+	const modPdf = (anamnesis: AnamnesisType) => {
+		return  {
+			type: anamnesis.title,
+			patientName: anamnesis.p_name,
+			patientSurname: anamnesis.p_surname,
+			patientDoB: anamnesis.birthday,
+			patientAddress: anamnesis.address,
+			town: anamnesis.city,
+			zip: anamnesis.zipcode,
+			doctorName: anamnesis.d_name,
+			doctorSurname: anamnesis.d_surname,
+			doctorSpecialization: anamnesis.specialty,
+			creationDate: anamnesis.date,
+			diagnosis: anamnesis.diagnosis,
+			anamnesis: anamnesis.contents,
+			kzz: anamnesis.kzz,
+			mkb10: anamnesis.mkb10
+		}
+	}
+
 	return (
 		<SafeAreaView className="flex-1 bg-white px-4 pt-10">
 
@@ -277,16 +297,29 @@ export default function DoctorHome() {
 							<Text className="text-gray-700 text-base">{selectedAnamnesis?.contents}</Text>
 						</ScrollView>
 
+
 						{
 							selectedAnamnesis?.status !== "CONFIRMED" && (
-								<TouchableOpacity className={` rounded-lg items-center justify-center mt-4 h-[40px]
-								${selectedAnamnesis?.status==="UNPROCESSED" ? "bg-gray-500": "bg-[#00A8E8]"}
+								<View>
+									<TouchableOpacity className={` rounded-lg items-center justify-center mt-4 h-[40px]
+										${selectedAnamnesis?.status === "UNPROCESSED" ? "bg-gray-500" : "bg-[#00A8E8]"}
+									`}
+													  onPress={() => handleShowEditOverlay()}
+													  disabled={selectedAnamnesis?.status === "UNPROCESSED"}
+									>
+										<Text className={`text-lg text-white `}>Uredi in potrdi</Text>
+									</TouchableOpacity>
+									<TouchableOpacity className={` rounded-lg items-center justify-center mt-4 h-[40px]
+								${selectedAnamnesis?.status === "UNPROCESSED" ? "bg-gray-500" : "bg-[#00A8E8]"}
 								`}
-												  onPress={() => handleShowEditOverlay()}
-												  disabled={selectedAnamnesis?.status==="UNPROCESSED"}
-								>
-									<Text className={`text-lg text-white `}>Uredi in potrdi</Text>
-								</TouchableOpacity>
+													  onPress={() => createPDF(modPdf(selectedAnamnesis!))}
+													  disabled={selectedAnamnesis?.status === "UNPROCESSED"}
+									>
+										<Text className={`text-lg text-white `}>Prenesi PDF</Text>
+									</TouchableOpacity>
+
+								</View>
+
 							)
 						}
 
