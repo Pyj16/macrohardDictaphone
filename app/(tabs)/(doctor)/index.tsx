@@ -299,8 +299,7 @@ export default function DoctorHome() {
 
 
 						{
-							selectedAnamnesis?.status !== "CONFIRMED" && (
-								<View>
+							selectedAnamnesis?.status !== "CONFIRMED" ? (
 									<TouchableOpacity className={` rounded-lg items-center justify-center mt-4 h-[40px]
 										${selectedAnamnesis?.status === "UNPROCESSED" ? "bg-gray-500" : "bg-[#00A8E8]"}
 									`}
@@ -309,17 +308,13 @@ export default function DoctorHome() {
 									>
 										<Text className={`text-lg text-white `}>Uredi in potrdi</Text>
 									</TouchableOpacity>
-									<TouchableOpacity className={` rounded-lg items-center justify-center mt-4 h-[40px]
-								${selectedAnamnesis?.status === "UNPROCESSED" ? "bg-gray-500" : "bg-[#00A8E8]"}
-								`}
-													  onPress={() => createPDF(modPdf(selectedAnamnesis!))}
-													  disabled={selectedAnamnesis?.status === "UNPROCESSED"}
-									>
-										<Text className={`text-lg text-white `}>Prenesi PDF</Text>
-									</TouchableOpacity>
 
-								</View>
-
+							): (
+							<TouchableOpacity className={` rounded-lg items-center justify-center mt-4 h-[40px] bg-[#00A8E8]`}
+								onPress={() => createPDF(modPdf(selectedAnamnesis!))}
+							>
+								<Text className={`text-lg text-white `}>Prenesi PDF</Text>
+							</TouchableOpacity>
 							)
 						}
 
