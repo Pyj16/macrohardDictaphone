@@ -88,7 +88,7 @@ export default function LoginScreen() {
       setId(user.id);
       setName(user.givenName);
       setSurname(user.surname || user.familyName);
-      setEmail(user.userPrincipalName || user.mail);
+      setEmail(user.mail);
 
       setLoading(false);
       router.replace(roleValue === "admin" ? "/(tabs)/(administrator)" : "/(tabs)/(doctor)");

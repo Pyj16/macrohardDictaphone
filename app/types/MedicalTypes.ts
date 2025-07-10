@@ -35,5 +35,11 @@ export interface AnamnesisType {
     id_anamnesis: number;
     date: string;
     status: string;
+    "country": string,
+    "zipcode":string,
+    'city': string,
+    "address":string,
+    "specialty":string,
+    "kzz": string,
+    "birthday": string,
 }
-
