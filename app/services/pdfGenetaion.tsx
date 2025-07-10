@@ -1,10 +1,6 @@
-import React, {useEffect} from "react";
-import { View, Text } from "react-native";
-import {PDFDocument, StandardFonts, rgb, PDFFont} from 'pdf-lib';
+import {PDFDocument, PDFFont, rgb, StandardFonts} from 'pdf-lib';
 import * as FileSystem from 'expo-file-system';
-import { StorageAccessFramework } from 'expo-file-system';
-import * as MediaLibrary from 'expo-media-library';
-import {string} from "postcss-selector-parser";
+import {StorageAccessFramework} from 'expo-file-system';
 
 const pdfDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -18,17 +14,23 @@ const pdfDate = (dateString: string) => {
 }
 
 function wrapText(text: string, font: PDFFont, maxWidth: number, fontSize: number) {
-    const words = text.split(' ');
+    let words = text.replaceAll('č', 'c').replaceAll('Č', 'C').replaceAll('\n', ' \n ').split(' ');
     // console.log(words)
     const lines = [];
     let currentLine = words[0];
+    console.log(words)
 
     for (let i = 1; i < words.length; i++) {
 //         	console.log(currentLine)
-        if(words[i] != '\n'){
+        if(words[i] =="\n"){
+            console.log('ran into n')
+            lines.push(currentLine);
+            currentLine = ""
+        }
+        else{
             const testLine = currentLine + ' ' + words[i];
 //         	console.log(currentLine)
-            const safeText = testLine.normalize('NFD').replaceAll(/[\u0300-\u036f]/g, 'c');
+            const safeText = testLine.normalize('NFKD').replace(/[^\x00-\x7F]/g, '');
             const testWidth = font.widthOfTextAtSize(safeText, fontSize);
             // const testWidth = font.widthOfTextAtSize(testLine, fontSize);
 
@@ -68,6 +70,7 @@ export const createPDF = async (docData: documentInterface) => {
   // Document creation and definition
       const pdfDoc = await PDFDocument.create()
       const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman)
+    console.log('managing2')
       const page = pdfDoc.addPage()
       const { width, height } = page.getSize()
 
