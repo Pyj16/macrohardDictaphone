@@ -1,12 +1,12 @@
-import SERVER_URL from "@/constants/serverSettings";
+import SERVER_URL, {public_key} from "@/constants/serverSettings";
 import {RSA} from "react-native-rsa-native";
-import decryptAesGcm from "@/app/services/encryption";
+import decryptAesGcm, {encryptAes} from "@/app/services/encryption";
 import {Modal, Pressable, SafeAreaView, ScrollView, Text, View} from "react-native";
 import React, {useEffect, useState} from "react";
-import {AnamnesisType} from "@/app/types/MedicalTypes";
-//import useFakeAuthContext from "@/app/services/fakeAuthContext";
+import {AnamnesisType, updatedAnamnesisType} from "@/app/types/MedicalTypes";
 import AnamnesisEditOverlay from "@/app/components/AnamnesisEditOverlay";
 import { useAuth } from '../../services/authContext';
+import {Buffer} from "buffer";
 
 export default function AdminIndex(){
 	const [anamnesis, setAnamnesis] = useState<AnamnesisType[]>([]);
@@ -16,6 +16,7 @@ export default function AdminIndex(){
 	const [showOverlay, setShowOverlay] = useState<boolean>(false);
 	const [showEditOverlay, setShowEditOverlay] = useState<boolean>(false);
 	const {name, surname, email} = useAuth(); // const {name, surname, email} = useFakeAuthContext();
+	const [r, sr] = useState("")
 	const close = () => {
 		setShowEditOverlay(false);
 	}
@@ -23,6 +24,55 @@ export default function AdminIndex(){
 		setShowOverlay(false);
 		setShowEditOverlay(true);
 	}
+
+
+
+	const confirmAnamnesis = async (updatedAnamnesis: updatedAnamnesisType) => {
+		try{
+			const array = new Uint8Array(32);
+			crypto.getRandomValues(array);
+			const aesKeyBase64 = Buffer.from(array).toString('base64');
+			console.log("aesKeyBase64", aesKeyBase64);
+
+		}catch (e){
+			console.log("error", e);
+		}
+		const array = new Uint8Array(32);
+		crypto.getRandomValues(array);
+		const aesKeyBase64 = Buffer.from(array).toString('base64');
+
+		let encrypted_key = await RSA.encrypt(aesKeyBase64, public_key);
+
+		let contents = await encryptAes(updatedAnamnesis.content,  aesKeyBase64);
+
+		try{
+			let response = await fetch(`${SERVER_URL}/update-anamnesis`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					anamnesis_id: updatedAnamnesis.anamnesis_id,
+					encrypted_text: contents,
+					encrypted_key: encrypted_key,
+					patient_id: updatedAnamnesis.patient_id
+				})
+			});
+			console.log("response", response);
+			let data  = await response.json();
+
+			if (data.success) {
+				console.log("Data updated successfully");
+				sr("_")
+			}else{
+				console.log("Data update failed: ", data);
+			}
+		}catch(e){
+			console.error(e);
+		}
+
+	}
+
 
 	const dateFormat = (dateString: string) => {
 		const weekdays = ["ned", "pon", "tor", "sre", "čet", "pet", "sob"];
@@ -84,7 +134,7 @@ export default function AdminIndex(){
 			}
 		}
 		fetchAnamnesis().then(()=>console.log("success"))
-	}, []);
+	}, [r]);
 
 	return (
 		<SafeAreaView className="flex-1 bg-white px-4 pt-10">
@@ -135,7 +185,7 @@ export default function AdminIndex(){
 			</Modal>
 			{ showEditOverlay && (
 				<View className="h-full">
-					<AnamnesisEditOverlay visible={true} onClose={close} data={selectedAnamnesis!} onSave={setSelectedAnamnesis} isAdmin={true}/>
+					<AnamnesisEditOverlay visible={true} onClose={close} data={selectedAnamnesis!} onSave={confirmAnamnesis} isAdmin={true}/>
 				</View>
 			)}
 

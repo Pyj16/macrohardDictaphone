@@ -1,15 +1,18 @@
 import React, { useState, useEffect}from "react";
 import {Text, View, ScrollView, SafeAreaView, TouchableOpacity, Pressable, Modal, Image} from "react-native";
 import PatientOverlay from "@/app/components/PatientsOverlay";
-import {AnamnesisType, DoctorType, PatientType} from "@/app/types/MedicalTypes";
+import {AnamnesisType, DoctorType, PatientType, updatedAnamnesisType} from "@/app/types/MedicalTypes";
 import { useRouter } from "expo-router";
 //import fakeAuthContext from "@/app/services/fakeAuthContext";
 import { useAuth } from '../../services/authContext';
 import SERVER_URL, {public_key} from "@/constants/serverSettings";
 import {RSA} from "react-native-rsa-native";
-import decryptAesGcm from "@/app/services/encryption";
+import decryptAesGcm, {encryptAes} from "@/app/services/encryption";
 import AnamnesisEditOverlay from "@/app/components/AnamnesisEditOverlay";
 import {createPDF} from '@/app/services/pdfGenetaion'
+import AesGcmCrypto from "react-native-aes-gcm-crypto";
+import { Buffer } from 'buffer';
+
 
 export default function DoctorHome() {
 
@@ -23,45 +26,66 @@ export default function DoctorHome() {
 	const router = useRouter();
 	const [showEditOverlay, setShowEditOverlay] = useState<boolean>(false);
 	const { email, name, surname, id } = useAuth(); //const { email, name, surname, id } = fakeAuthContext();
+	const [r, sr] = useState("")
 
 
-	const confirmAnamnesis = async () => {
-		setLoading(true);
-		let response = await fetch(`${SERVER_URL}/finalize-anamnesis`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-			},
-			body: JSON.stringify({
-				anamnesis_id: selectedAnamnesis!.id_anamnesis,
-				content: selectedAnamnesis!.contents,
-				diagnosis: selectedAnamnesis!.diagnosis,
-				mkb10: selectedAnamnesis!.mkb10,
-				doctor_id: id,
-				patient_id: selectedAnamnesis!.id_patient
-			})
 
-		})
-		let data  = await response.json();
-		if (data.success) {
-			console.log("Data updated successfully");
+	const confirmAnamnesis = async (updatedAnamnesis:updatedAnamnesisType) => {
+		try{
+			const array = new Uint8Array(32);
+			crypto.getRandomValues(array);
+			const aesKeyBase64 = Buffer.from(array).toString('base64');
+			console.log("aesKeyBase64", aesKeyBase64);
+
+		}catch (e){
+			console.log("error", e);
 		}
-
-
-
-		/* TODO actually secure this
 		const array = new Uint8Array(32);
 		crypto.getRandomValues(array);
 		const aesKeyBase64 = Buffer.from(array).toString('base64');
 
-		let key = await RSA.encrypt(aesKeyBase64, public_key);
-
-		 */
+		let encrypted_key = await RSA.encrypt(aesKeyBase64, public_key);
 
 
+		console.log("Beginning encryption of the diagnosis...");
+		let diagnosis = await encryptAes(updatedAnamnesis.diagnosis, aesKeyBase64);
+		console.log(typeof diagnosis);
+
+		let contents = await encryptAes(updatedAnamnesis.content,  aesKeyBase64);
+		console.log("Anamnesis encrypted", typeof contents);
+
+		try{
+			console.log("encrypted_key", typeof encrypted_key);
+			console.log("mkb10", typeof updatedAnamnesis.mkb10);
+			console.log("Trying to fetch the data...");
+			let response = await fetch(`${SERVER_URL}/update-anamnesis`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({
+					anamnesis_id: updatedAnamnesis.anamnesis_id,
+					encrypted_text: contents,
+					encrypted_diagnosis: diagnosis,
+					mkb10: updatedAnamnesis.mkb10,
+					encrypted_key: encrypted_key,
+					patient_id: updatedAnamnesis.patient_id
+				})
+			});
+			console.log("response", response);
+			let data  = await response.json();
+
+			if (data.success) {
+				console.log("Data updated successfully");
+				sr("_")
+			}else{
+				console.log("Data update failed: ", data);
+			}
+		}catch(e){
+			console.error(e);
+		}
 
 	}
-
 
 	const dateFormat = (dateString: string) => {
 		const weekdays = ["ned", "pon", "tor", "sre", "čet", "pet", "sob"];
@@ -188,11 +212,12 @@ export default function DoctorHome() {
 				setLoading(false);
 
 			} catch (e) {
+
 				console.error("Failed to parse response", e);
 			}
 		}
 		fetchPatients().then(()=> {fetchAnamnesis()})
-	}, []);
+	}, [r]);
 
 
 
@@ -293,6 +318,13 @@ export default function DoctorHome() {
 						<Text className="text-gray-500 text-sm mb-3">
 							Zdravnik: Dr. {name} {surname}
 						</Text>
+						{
+							selectedAnamnesis?.status === "CONFIRMED" && (
+								<Text className="text-gray-500 text-sm mb-3">
+									Diagnoza: {selectedAnamnesis?.mkb10}: {selectedAnamnesis?.diagnosis}
+								</Text>
+							)
+						}
 						<ScrollView>
 							<Text className="text-gray-700 text-base">{selectedAnamnesis?.contents}</Text>
 						</ScrollView>
@@ -324,7 +356,7 @@ export default function DoctorHome() {
 			</Modal>
 			{ showEditOverlay && selectedAnamnesis?.status === "PENDING" && (
 				<View className="h-full">
-					<AnamnesisEditOverlay visible={true} onClose={close} data={selectedAnamnesis!} onSave={setSelectedAnamnesis} isAdmin={false}/>
+					<AnamnesisEditOverlay visible={true} onClose={close} data={selectedAnamnesis!} onSave={confirmAnamnesis} isAdmin={false}/>
 				</View>
 			)}
 

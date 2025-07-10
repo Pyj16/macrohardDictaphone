@@ -27,7 +27,7 @@ type RecordingSession = {
 
 export default function Recordings() {
     const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
-    const { id } = useAuth(); // useFakeAuthContext();
+    const { email } = useAuth(); // useFakeAuthContext();
     useEffect(() => {
         (async () => {
             const status = await AudioModule.requestRecordingPermissionsAsync();
@@ -200,74 +200,99 @@ export default function Recordings() {
         console.log(uri, normalizedUri);
         return {
             uri: normalizedUri,
-            name: `segment-${index + 1}.mpeg4`,
-            type: 'audio/mpeg4',
+            name: `segment-${index + 1}.mp3`,
+            type: 'audio/mpeg',
         };
     }
 
-    const handleUpload = async () => {
-        console.log(recordingSession);
+    async function ensureM4A(rawUri: string): Promise<string> {
+        if (rawUri.endsWith(".m4a")) {
+            return rawUri;
+        }
+        const renamed = rawUri + ".m4a";
+        try {
+            await FileSystem.moveAsync({ from: rawUri, to: renamed });
+            // @ts-ignore
+            setRecordingSession((prev) => ({
+                ...prev,
+                recordings: prev!.recordings.map((u) => (u === rawUri ? renamed : u)),
+            }));
+            return renamed;
+        } catch (e) {
+            console.error("Failed to rename file to .m4a:", e);
+            throw e;
+        }
+    }
+
+
+    async function handleUpload() {
         if (!recordingSession || !recordingSession.recordings.length) {
             setStatusText("Ni posnetkov");
             return;
         }
-        //
-        // const array = new Uint8Array(32);
-        // crypto.getRandomValues(array);
-        // const aesKeyBase64 = Buffer.from(array).toString('base64');
-        //
-        // let key = await RSA.encrypt(aesKeyBase64, public_key);
-
 
         const form = new FormData();
-
-
         setStatusText("Priprava datotek…");
+
         try {
-            recordingSession.recordings.map(async (uri, i) => {
-                setStatusText(uri)
-               const file = parseUriFile(uri, i);
-                form.append("audio_files", file as any);
-            });
+            // Convert or rename each file to .m4a first
+            await Promise.all(
+                recordingSession.recordings.map(async (rawUri, i) => {
+                    const fileUri = await ensureM4A(rawUri); // Ensures .m4a and moves if needed
+
+                    // @ts-ignore
+                    form.append("audio_files", {
+                        uri: fileUri,
+                        name: `segment-${i + 1}.m4a`,
+                        type: "audio/m4a",
+                    });
+                })
+            );
         } catch (e) {
             console.error("Failed to prepare audio files:", e);
-            setStatusText("Napaka v pripipravi posnetkoov");
+            setStatusText("Napaka v pripravi posnetkov");
             return;
         }
 
+        // Add extra metadata fields
         form.append("patient_id", recordingSession.patientId.toString());
         form.append("title", recordingSession.title);
-        form.append("doctor_id", id.toString())
+        form.append("doctor_email", email);
 
         setStatusText("Pošiljanje seje…");
-        try {
-            const response = await fetch(
-                `${SERVER_URL}/multiple-recordings`,
-                {
-                    method: "POST",
-                    headers: {
-                        Accept: "application/json",
-                    },
-                    body: form,
-                }
-            );
 
-           console.log(response);
+        try {
+            const url = `${SERVER_URL}/multiple-recordings`;
+            console.log("Uploading to:", url);
+
+            const response = await fetch(url, {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    // Do NOT manually set Content-Type with FormData!
+                },
+                body: form,
+            });
 
             const text = await response.text();
+            console.log("Raw response:", text);
+
             try {
                 const json = JSON.parse(text);
-                setStatusText(json.error ? "Prišlo je do napake: " + json.error : "status: " + json.status);
-            } catch {
-                setStatusText("Strežnik je prejel nepričakovan odgovor");
+                if (json.error) {
+                    setStatusText("Napaka: " + json.error);
+                } else {
+                    setStatusText("Uspešno: " + (json.message || "Seja poslana"));
+                }
+            } catch (e) {
+                console.error("Failed to parse JSON:", e);
+                setStatusText("Strežnik vrnil nepričakovan odgovor");
             }
         } catch (e) {
             console.error("Network error:", e);
-            setStatusText("Upload failed");
-            return;
+            setStatusText("Napaka v povezavi, prosim poskusite ponovno");
         }
-
-    };
+    }
 
     if (!recordingSession) {
         return <Text className="text-center mt-10 text-gray-500">Loading session…</Text>;
