@@ -6,12 +6,6 @@ export interface PatientType {
     birthday: string;
 }
 
-export interface SessionPatientType {
-    id: number;
-    name: string;
-    surname: string;
-}
-
 export interface DoctorType {
     id: number;
     name: string;
@@ -42,4 +36,12 @@ export interface AnamnesisType {
     "specialty":string,
     "kzz": string,
     "birthday": string,
+}
+
+export interface updatedAnamnesisType {
+    content: string;
+    anamnesis_id: number;
+    diagnosis: string;
+    mkb10: string;
+    patient_id: number;
 }

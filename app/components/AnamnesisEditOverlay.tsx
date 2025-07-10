@@ -7,20 +7,22 @@ import {
 	Pressable,
 	ScrollView,
 } from "react-native";
-import { AnamnesisType } from "@/app/types/MedicalTypes";
+import {AnamnesisType, updatedAnamnesisType} from "@/app/types/MedicalTypes";
 
-export default function AnamnesisEditOverlay({ visible, onClose, data, onSave,  isAdmin = false }: { visible: boolean; onClose: () => void; data: AnamnesisType; onSave: (updated: AnamnesisType) => void; isAdmin: boolean }) {
+export default function AnamnesisEditOverlay({ visible, onClose, data, onSave,  isAdmin = false }: { visible: boolean; onClose: () => void; data: AnamnesisType; onSave: (updated: updatedAnamnesisType) => void; isAdmin: boolean }) {
 	const [diagnosis, setDiagnosis] = useState(data.diagnosis);
 	const [mkb10, setMkb10] = useState(data.mkb10);
 	const [contents, setContents] = useState(data.contents);
 
 	const handleSave = () => {
-		onSave({
-			...data,
-			mkb10: mkb10,
+		let newDiagnosis:updatedAnamnesisType = {
 			diagnosis: diagnosis,
-			contents,
-		});
+			content: contents,
+			mkb10: mkb10,
+			anamnesis_id: data.id_anamnesis,
+			patient_id: data.id_patient
+		}
+		onSave(newDiagnosis);
 		onClose();
 	};
 
@@ -77,7 +79,7 @@ export default function AnamnesisEditOverlay({ visible, onClose, data, onSave,  
 							onPress={handleSave}
 							className="bg-[#00A8E8] py-3 rounded-lg items-center mb-3"
 						>
-							<Text className="text-white font-semibold">Shrani</Text>
+							<Text className="text-white font-semibold">Shrani in potrdi</Text>
 						</Pressable>
 
 						<Pressable

@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Pressable } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { SessionPatientType } from "@/app/types/MedicalTypes";
-import { sessionPatients } from "@/app/data/medical-dev-data";
+import {PatientType } from "@/app/types/MedicalTypes";
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from "expo-router";
+import SERVER_URL from "@/constants/serverSettings";
+import {useAuth} from "@/app/services/authContext";
 
 const SessionScreen = () => {
     const [documentName, setDocumentName] = useState('');
-    const [selectedPatient, setSelectedPatient] = useState<SessionPatientType>();
+    const [selectedPatient, setSelectedPatient] = useState<PatientType>();
     const [isPressed, setIsPressed] = useState<boolean>(false);
-    const [patients, setPatients] = useState<SessionPatientType[]>([]);
+    const [patients, setPatients] = useState<PatientType[]>([]);
     const today = new Date();
     const router = useRouter();
-
+    const { email } = useAuth();
     const formattedDate = today.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
@@ -32,7 +33,7 @@ const SessionScreen = () => {
 
         const session = {
             sessionId: sessionId,
-            patientId: selectedPatient.id,
+            patientId: selectedPatient.patient_id,
             patientName: selectedPatient.name,
             patientSurname: selectedPatient.surname,
             title: documentName || "Untitled",
@@ -55,7 +56,35 @@ const SessionScreen = () => {
     };
 
     useEffect(() => {
-        setPatients(sessionPatients);
+
+        const fetchPatients = async () => {
+            try{
+                const response = await fetch(`${SERVER_URL}/fetch-patients`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        doctor_email: email
+                    })
+                });
+                const rawText = await response.text();
+                let data:any;
+                try {
+                    data = JSON.parse(rawText);
+                }catch (error) {
+                    console.log("Failed to parse the response", error);
+                    return;
+                }
+                setPatients(data.patients);
+
+            }
+            catch (e){
+                console.log("Failed to parse the response (outer)", e);
+            }
+
+        }
+        fetchPatients()
     }, []);
 
     return (
@@ -67,36 +96,33 @@ const SessionScreen = () => {
             <TextInput
                 value={documentName}
                 onChangeText={setDocumentName}
-                placeholder="Enter document name"
+                placeholder="Vnesite tip dokumenta"
                 placeholderTextColor="#888"
                 className="border rounded-xl px-4 py-3 mt-2 text-black"
             />
 
-            {/* Patient Picker */}
             <Text className="mt-6 text-black">Select Patient</Text>
             <View className="border rounded-xl mt-2">
                 <Picker
-                    selectedValue={selectedPatient?.id}
+                    selectedValue={selectedPatient?.patient_id}
                     onValueChange={(itemValue) => {
-                        const patient = patients.find(p => p.id === itemValue);
+                        const patient = patients.find(p => p.patient_id === itemValue);
                         setSelectedPatient(patient);
                     }}
                     style={{ color: 'black' }}
                 >
                     <Picker.Item label="Izberite pacienta" value="" />
                     {patients.map((p) => (
-                        <Picker.Item key={p.id} label={`${p.name} ${p.surname}`} value={p.id} />
+                        <Picker.Item key={p.patient_id} label={`${p.name} ${p.surname}`} value={p.patient_id} />
                     ))}
                 </Picker>
             </View>
 
-            {/* Date */}
             <Text className="mt-6 text-black">Datum obiska</Text>
             <View className="border rounded-xl px-4 py-3 mt-2 bg-white">
                 <Text className="text-black">{formattedDate}</Text>
             </View>
 
-            {/* Save Button */}
             <Pressable
                 onPressIn={() => setIsPressed(true)}
                 onPressOut={() => setIsPressed(false)}

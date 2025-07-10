@@ -85,9 +85,11 @@ export default function LoginScreen() {
       console.log("User Profile Data: ",user )
       setProfile(user);
 
+      const [name, surname ] = user.displayName.split(" ");
+
       setId(user.id);
-      setName(user.givenName);
-      setSurname(user.surname || user.familyName);
+      setName(name);
+      setSurname(surname);
       setEmail(user.mail);
 
       setLoading(false);

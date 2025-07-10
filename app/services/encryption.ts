@@ -1,6 +1,7 @@
 import AesGcmCrypto from 'react-native-aes-gcm-crypto';
 
 import { Buffer } from 'buffer';
+import {RSA} from "react-native-rsa-native";
 
 export default async function decryptAesGcm(encryptedBase64: string, binaryKey: string) {
 	const raw = Buffer.from(encryptedBase64, 'base64');
@@ -27,6 +28,16 @@ export default async function decryptAesGcm(encryptedBase64: string, binaryKey: 
 		console.error('AES‐GCM decryption failed:', err);
 		return '';
 	}
+}
+
+export async function encryptAes(plaintext: string, base64key:string){
+	const result = await AesGcmCrypto.encrypt(plaintext, false, base64key);
+	const ivBytes = Buffer.from(result.iv, 'hex');
+	const contentBytes = Buffer.from(result.content, 'base64');
+	const tagBytes = Buffer.from(result.tag, 'hex');
+	const combined = Buffer.concat([ivBytes, contentBytes, tagBytes]);
+	const encrypted_text = combined.toString('base64');
+	return encrypted_text;
 }
 
 
