@@ -55,8 +55,8 @@ export default function LoginScreen() {
         discovery
       );
 
-      const { accessToken: jwt, idToken } = tokenResult;
-      setToken(jwt);
+      const { accessToken, idToken } = tokenResult;
+      setToken(idToken);
 
       let roleValue = "doctor";  // fallback
       if (idToken) {
@@ -74,7 +74,7 @@ export default function LoginScreen() {
       setRole(roleValue);
 
       const graphRes = await fetch("https://graph.microsoft.com/v1.0/me", {
-        headers: { Authorization: `Bearer ${jwt}` },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!graphRes.ok) {
         console.error("Graph API error", graphRes.status, await graphRes.text());

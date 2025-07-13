@@ -15,7 +15,7 @@ export default function AdminIndex(){
 	const [selectedAnamnesis, setSelectedAnamnesis] = useState<AnamnesisType>();
 	const [showOverlay, setShowOverlay] = useState<boolean>(false);
 	const [showEditOverlay, setShowEditOverlay] = useState<boolean>(false);
-	const {name, surname, email} = useAuth(); // const {name, surname, email} = useFakeAuthContext();
+	const {name, surname, email, token} = useAuth(); // const {name, surname, email} = useFakeAuthContext();
 	const [r, sr] = useState("")
 	const close = () => {
 		setShowEditOverlay(false);
@@ -50,6 +50,7 @@ export default function AdminIndex(){
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
+					"Authorization": `Bearer ${token}`
 				},
 				body: JSON.stringify({
 					anamnesis_id: updatedAnamnesis.anamnesis_id,
@@ -103,6 +104,7 @@ export default function AdminIndex(){
 					headers: {
 						Accept: 'application/json',
 						'Content-Type': 'application/json',
+                        "Authorization": `Bearer ${token}`
 					},
 					body: JSON.stringify({public_key: publicKey, doctor_email: email}),
 

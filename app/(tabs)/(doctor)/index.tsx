@@ -25,7 +25,7 @@ export default function DoctorHome() {
 	const [showOverlay, setShowOverlay] = useState<boolean>(false);
 	const router = useRouter();
 	const [showEditOverlay, setShowEditOverlay] = useState<boolean>(false);
-	const { email, name, surname, id } = useAuth(); //const { email, name, surname, id } = fakeAuthContext();
+	const { email, name, surname, id, token} = useAuth(); //const { email, name, surname, id } = fakeAuthContext();
 	const [r, sr] = useState("")
 
 
@@ -62,6 +62,7 @@ export default function DoctorHome() {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
+					"Authorization": `Bearer ${token}`
 				},
 				body: JSON.stringify({
 					anamnesis_id: updatedAnamnesis.anamnesis_id,
@@ -154,6 +155,7 @@ export default function DoctorHome() {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
+						"Authorization": `Bearer ${token}`
 					},
 					body: JSON.stringify({
 						doctor_email: email
@@ -185,6 +187,7 @@ export default function DoctorHome() {
 					headers: {
 						Accept: 'application/json',
 						'Content-Type': 'application/json',
+						"Authorization": `Bearer ${token}`
 					},
 					body: JSON.stringify({public_key: publicKey, doctor_email: email}),
 

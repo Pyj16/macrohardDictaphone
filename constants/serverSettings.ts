@@ -1,6 +1,5 @@
 
-const SERVER_PORT = 5000
-const SERVER_URL = "http://192.168.1.131:" + SERVER_PORT
+const SERVER_URL = "https://mediphone-backend-854458745933.europe-west1.run.app"
 
 export const public_key = `-----BEGIN PUBLIC KEY-----
                                    MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqMITjFBoBFGuMSJhismX
