@@ -175,7 +175,7 @@ export default function AdminIndex(){
 							Zdravnik: Dr. {name} {surname}
 						</Text>
 						<ScrollView>
-							<Text className="text-gray-700 text-base">This is actually what it{selectedAnamnesis?.contents}</Text>
+							<Text className="text-gray-700 text-base">{selectedAnamnesis?.contents}</Text>
 						</ScrollView>
 
 						<Pressable className="bg-[#00A8E8] w-full h-[40px] rounded-lg justify-center items-center mt-4 " onPress={() => handleShowEditOverlay()}>

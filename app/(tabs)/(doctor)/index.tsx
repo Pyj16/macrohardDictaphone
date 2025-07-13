@@ -255,7 +255,7 @@ export default function DoctorHome() {
 			/>
 
 
-			<Text className="text-gray-500 text-md">welcome back!</Text>
+			<Text className="text-gray-500 text-md">Dobrodošli nazaj!</Text>
 			<Text className="text-2xl font-bold mb-4">Dr. {surname}</Text>
 
 			<View className="h-28 mb-4">
