@@ -7,6 +7,7 @@ import {AnamnesisType, updatedAnamnesisType} from "@/app/types/MedicalTypes";
 import AnamnesisEditOverlay from "@/app/components/AnamnesisEditOverlay";
 import { useAuth } from '../../services/authContext';
 import {Buffer} from "buffer";
+import 'react-native-get-random-values';
 
 export default function AdminIndex(){
 	const [anamnesis, setAnamnesis] = useState<AnamnesisType[]>([]);
@@ -99,14 +100,14 @@ export default function AdminIndex(){
 				setLoading(true);
 				const keypair = await RSA.generateKeys(2048)
 				const publicKey = keypair.public;
-				const response = await fetch(`${SERVER_URL}/fetch-anamnesis`, {
+				const response = await fetch(`${SERVER_URL}/fetch-anamnesis-admin`, {
 					method: 'POST',
 					headers: {
 						Accept: 'application/json',
 						'Content-Type': 'application/json',
                         "Authorization": `Bearer ${token}`
 					},
-					body: JSON.stringify({public_key: publicKey, doctor_email: email}),
+					body: JSON.stringify({public_key: publicKey}),
 
 				})
 				const rawText = await response.text();

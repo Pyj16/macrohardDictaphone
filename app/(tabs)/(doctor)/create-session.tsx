@@ -14,7 +14,7 @@ const SessionScreen = () => {
     const [patients, setPatients] = useState<PatientType[]>([]);
     const today = new Date();
     const router = useRouter();
-    const { email } = useAuth();
+    const { email, token } = useAuth();
     const formattedDate = today.toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'short',
@@ -63,6 +63,8 @@ const SessionScreen = () => {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+
                     },
                     body: JSON.stringify({
                         doctor_email: email

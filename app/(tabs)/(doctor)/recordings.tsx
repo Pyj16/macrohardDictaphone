@@ -27,7 +27,7 @@ type RecordingSession = {
 
 export default function Recordings() {
     const { sessionId } = useLocalSearchParams<{ sessionId: string }>();
-    const { email } = useAuth(); // useFakeAuthContext();
+    const { email, token } = useAuth(); // useFakeAuthContext();
     useEffect(() => {
         (async () => {
             const status = await AudioModule.requestRecordingPermissionsAsync();
@@ -269,7 +269,8 @@ export default function Recordings() {
                 method: "POST",
                 headers: {
                     Accept: "application/json",
-                    // Do NOT manually set Content-Type with FormData!
+                    "Authorization": `Bearer ${token}`
+
                 },
                 body: form,
             });
